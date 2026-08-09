@@ -14,7 +14,6 @@ Usage:
 """
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service import workspace
-import base64
 import getpass
 
 w = WorkspaceClient()
@@ -30,7 +29,7 @@ def _put(key: str, prompt: str) -> None:
     w.secrets.put_secret(
         scope="database",
         key=key,
-        string_value=base64.b64encode(value.encode("utf-8")).decode("ascii"),
+        string_value=value,
     )
     print(f"  stored {key}")
 
