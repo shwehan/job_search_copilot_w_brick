@@ -41,12 +41,42 @@ _KEY = os.environ.get("LAKEBASE_SECRET_KEY", "lakebase-url")
 DatabaseError = pg8000.DatabaseError
 
 
+def _unwrap_if_double_encoded(value: str) -> str:
+    """Undo an accidental extra layer of base64, if and only if it's provably safe.
+
+    Guards against the same misconfiguration secrets_helper.py guards
+    against: if LAKEBASE_URL is wired up as an "environment variable from a
+    secret" in the Databricks Apps UI rather than left for this module's
+    own WorkspaceClient call to resolve, the env var ends up holding the
+    raw base64-encoded bytes this project's setup_secrets.py stored --  not
+    a valid postgresql:// URL. urlparse() on that blob silently returns
+    empty components rather than raising, so the failure doesn't surface
+    until pg8000.connect(user=None, ...) rejects it.
+
+    The decode is only trusted if it produces valid, printable UTF-8 text
+    *and* re-encoding that text reproduces the original string exactly --
+    a real Lakebase URL (colons, slashes, an '@', a '?') will never
+    accidentally pass that round-trip check, so this is safe to run
+    unconditionally.
+    """
+    try:
+        decoded = base64.b64decode(value, validate=True)
+        text = decoded.decode("utf-8")
+    except Exception:
+        return value
+    if not text.isprintable():
+        return value
+    if base64.b64encode(text.encode("utf-8")).decode("ascii") != value:
+        return value
+    return text
+
+
 @lru_cache(maxsize=1)
 def lakebase_url() -> str:
     """Resolve the Lakebase connection URL from the environment or a secret."""
     env_url = os.environ.get("LAKEBASE_URL", "").strip()
     if env_url:
-        return env_url
+        return _unwrap_if_double_encoded(env_url)
 
     from databricks.sdk import WorkspaceClient
 
