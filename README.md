@@ -119,12 +119,25 @@ curl -X POST https://<app-url>/jobs/sync \
   -d '{"queries": [{"keyword": "data engineer", "location": "Austin, TX"}], "limit_per_source": 25}'
 ```
 
-### 7. Try the CDF spike (5 minutes, worth doing now)
+### 7. CDF: confirmed unavailable on Free Edition — see below
 
-In the Lakebase UI, attempt **Lakebase CDF → Start** on `applications` (already has
-`REPLICA IDENTITY FULL` set from `06_create_applications.sql`). See §6 of
-[`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for why this is worth checking now rather than in Phase 7,
-and what to do either way.
+`applications` has `REPLICA IDENTITY FULL` set (from `06_create_applications.sql`), so it was
+eligible the moment we tried. Attempting **Lakebase CDF → Start** on it gets past table selection
+cleanly, but fails at the destination-catalog step with:
+
+> *"The selected catalog uses Databricks-managed Default Storage, which is not supported for
+> Lakebase CDF. Please select a catalog backed by external storage."*
+
+`workspace` is Free Edition's only available catalog, and it uses Databricks-managed default
+storage — there's no alternative catalog to pick instead. Creating one backed by external storage
+needs an S3/ADLS/GCS bucket, an IAM role, and a storage credential, which requires an actual cloud
+account Free Edition doesn't provide. This is a structural limitation of the tier, not a
+misconfiguration — confirmed directly via the Lakebase CDF UI rather than assumed from docs.
+
+**What replaces it:** the scheduled Databricks Job (Phase 4) that re-syncs postings also writes a
+periodic snapshot of `applications` — counts per pipeline stage, average days-in-stage — either to
+a plain Lakebase summary table or a Delta table via a normal batch write. Same end-user-visible
+result (a funnel view), on a polling interval instead of event-driven streaming.
 
 ---
 
@@ -165,6 +178,22 @@ curl -X POST https://<app-url>/jobs/sync \
 per-query locations. Omit `queries` entirely to use the defaults from `app.yaml`.
 
 ---
+
+## Known limitations
+
+**Lakebase Change Data Feed is unavailable on Databricks Free Edition.** Confirmed directly, not
+assumed — see step 7 above for the exact error and why there's no workaround within this tier.
+Phase 4's scheduled Job produces the same pipeline-funnel visibility via periodic snapshots
+instead of event-driven streaming.
+
+**RemoteOK's public feed is noisy.** Test posts, dead listings, and non-job spam show up mixed
+into real postings. `job_client.py` drops the obviously-empty cases at harvest time, but that's
+basic hygiene, not scam detection — a real legitimacy check is a deliberately separate, LLM-backed
+tool planned for a later phase, not conflated with data plumbing here.
+
+**No user/profile management UI yet.** `users` and `profiles` exist in the schema and are
+populated via direct SQL for now; a proper create/edit flow is Phase 3's job (the human-facing
+dashboard), not Phase 1's.
 
 ## Running locally
 

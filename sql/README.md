@@ -16,9 +16,15 @@ a notebook cell using `lakebase.connection_parts()`.
 | `08_create_interview_notes.sql` | `interview_notes` |
 | `09_create_contacts.sql` | `contacts` |
 | `10_verify_schema.sql` | (inspection only) |
+| `11_enable_pgvector.sql` | pgvector extension |
+| `12_create_job_posting_embeddings.sql` | `job_posting_embeddings` (chunked, `VECTOR(1024)`, HNSW index) |
+| `13_add_profile_resume_embedding.sql` | Adds `resume_embedding`/`resume_content_hash`/`resume_embedded_at` to `profiles` |
+| `14_verify_phase2_schema.sql` | (inspection only) |
 
 Order matters: `04` must run before `05` (skill joins reference `job_postings`), and `02`/`04` must
-run before `06` (`applications` references both `profiles` and `job_postings`).
+run before `06` (`applications` references both `profiles` and `job_postings`). `04` must also run
+before `12` (`job_posting_embeddings` references `job_postings`), and `02` before `13` (it alters
+`profiles`).
 
 ## Why 10 tables, not 8
 
@@ -42,9 +48,12 @@ the model's dimension before it's chosen. `content_hash` on `job_postings` is al
 Phase 2's re-embed-only-what-changed logic (same pattern as the weather-app homework) has something
 to compare against from day one.
 
-## CDF readiness
+## CDF: confirmed unavailable on Free Edition
 
-`applications` gets `ALTER TABLE ... REPLICA IDENTITY FULL` in `06_create_applications.sql` up
-front, since that's a prerequisite for Lakebase Change Data Feed regardless of whether the Free
-Edition CDF spike (see the capstone plan) turns out to be possible. If it isn't, this line is inert
-and harmless.
+`applications` has `REPLICA IDENTITY FULL` set in `06_create_applications.sql` — that part worked
+as intended. Attempting Lakebase CDF against it confirmed the limitation predicted in the capstone
+plan: Free Edition's only catalog (`workspace`) uses Databricks-managed default storage, which
+Lakebase CDF explicitly rejects as a destination. See the main `README.md`'s "Known limitations"
+section for the exact error and what replaces it (a scheduled Job writing periodic snapshots
+instead of streaming). The `REPLICA IDENTITY FULL` line stays in the DDL regardless — harmless, and
+correct if this project ever runs on a tier where CDF is available.
