@@ -16,14 +16,16 @@ The connection string is a standard Postgres URL:
 Resolved in this order:
 
 1. The ``LAKEBASE_URL`` environment variable, for local development.
-2. A Databricks secret (scope ``database``, key ``lakebase-url`` by default)
-   -- how the deployed Databricks App and any notebook get their credentials.
+2. A base64-encoded Databricks secret (scope ``database``, key
+   ``lakebase-url`` by default) -- how the deployed Databricks App and any
+   notebook get their credentials.
 
 Every write in this project goes through pg8000. There is no Spark JDBC
 anywhere in the pipeline, because JDBC cannot write to pgvector's ``VECTOR``
 type (added in Phase 2) or use ``ON CONFLICT`` for idempotent upserts.
 """
 
+import base64
 import os
 import ssl
 from contextlib import contextmanager
@@ -49,7 +51,7 @@ def lakebase_url() -> str:
     from databricks.sdk import WorkspaceClient
 
     secret = WorkspaceClient().secrets.get_secret(scope=_SCOPE, key=_KEY)
-    return secret.value
+    return base64.b64decode(secret.value).decode("utf-8")
 
 
 def connection_parts() -> dict:

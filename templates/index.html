@@ -145,33 +145,9 @@ machine learning engineer</textarea>
       </div>
       <div class="feedback" id="sync-feedback" aria-live="polite"></div>
     </section>
-
-    <section class="panel" style="margin-top: 18px;">
-      <p class="eyebrow">Step 2</p>
-      <h2>Generate embeddings</h2>
-      <p class="note">Chunks every posting that has no current vector and embeds it via <code>databricks-gte-large-en</code>. Unchanged postings are skipped.</p>
-      <div class="actions">
-        <button class="secondary" id="btn-embed">Generate embeddings</button>
-      </div>
-      <div class="feedback" id="embed-feedback" aria-live="polite"></div>
-    </section>
   </div>
 
   <div>
-    <section class="panel" style="margin-bottom: 18px;">
-      <p class="eyebrow">Step 3</p>
-      <h2>Search by meaning</h2>
-      <p class="note">Describe what you're looking for in your own words — matching is by meaning, not keywords.</p>
-      <div class="filters" style="margin-bottom: 0;">
-        <div class="field" style="flex: 1 1 auto;">
-          <label for="search-query">Query</label>
-          <input type="text" id="search-query" placeholder="remote backend roles that don't need 5+ years of Kubernetes">
-        </div>
-        <button id="btn-search" type="button">Search</button>
-      </div>
-      <div class="feedback" id="search-feedback" aria-live="polite"></div>
-    </section>
-
     <section class="panel" style="margin-bottom: 18px;">
       <p class="eyebrow">Browse</p>
       <h2>Synced postings</h2>
@@ -195,7 +171,7 @@ machine learning engineer</textarea>
     </section>
 
     <div class="results-head">
-      <h2 id="results-head-title">Postings</h2>
+      <h2>Postings</h2>
       <span class="count" id="results-count"></span>
     </div>
     <div id="results">
@@ -230,14 +206,11 @@ machine learning engineer</textarea>
     try {
       const h = await callApi("/healthz");
       const stats = await callApi("/jobs/stats");
-      const emb = await callApi("/embeddings/stats");
       const srcs = h.sources_configured || {};
       const srcLabel = (name, on) => (on ? "<b>" + name + "</b>" : '<span class="warn">' + name + " off</span>");
       line.innerHTML =
         "Lakebase" +
         '<span class="sep">/</span>postings <b>' + String(stats.total_postings || 0).padStart(4, "0") + "</b>" +
-        '<span class="sep">/</span>embedded <b>' + String(emb.embedded_postings || 0).padStart(4, "0") + "</b>" +
-        '<span class="sep">/</span>chunks <b>' + String(emb.chunks || 0).padStart(4, "0") + "</b>" +
         '<span class="sep">/</span>sources ' + [srcLabel("adzuna", srcs.adzuna), srcLabel("usajobs", srcs.usajobs), srcLabel("remoteok", srcs.remoteok)].join(", ");
     } catch (err) {
       line.innerHTML = "Lakebase unreachable &mdash; " + escapeHtml(err.message);
@@ -278,62 +251,6 @@ machine learning engineer</textarea>
     }
   });
 
-  $("btn-embed").addEventListener("click", async () => {
-    const button = $("btn-embed");
-    const feedback = $("embed-feedback");
-    button.disabled = true;
-    say(feedback, "Chunking and embedding pending postings\u2026");
-    try {
-      const result = await callApi("/jobs/embed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
-      });
-      say(feedback, result.chunks_written === 0
-        ? "Everything is already embedded. Sync new postings to add more."
-        : "Embedded " + result.postings_processed + " postings into " + result.chunks_written + " chunks.",
-        "ok");
-      refreshStatus();
-    } catch (err) {
-      say(feedback, err.message, "error");
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  async function runSearch() {
-    const button = $("btn-search");
-    const feedback = $("search-feedback");
-    const query = $("search-query").value.trim();
-    if (!query) { say(feedback, "Type what you're looking for.", "error"); return; }
-
-    button.disabled = true;
-    say(feedback, "Searching\u2026");
-    try {
-      const payload = await callApi("/jobs/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, top_k: 10 })
-      });
-      say(feedback, "", "");
-      $("results-head-title").textContent = 'Results for \u201c' + query + '\u201d';
-      if (!payload.results.length) {
-        $("results-count").textContent = "";
-        $("results").innerHTML = '<div class="empty"><strong>No matches</strong><p>' + escapeHtml(payload.message || "Nothing matched that query.") + '</p></div>';
-      } else {
-        $("results-count").textContent = payload.results.length + " shown";
-        renderPostings({ postings: payload.results });
-      }
-    } catch (err) {
-      say(feedback, err.message, "error");
-    } finally {
-      button.disabled = false;
-    }
-  }
-
-  $("btn-search").addEventListener("click", runSearch);
-  $("search-query").addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
-
   function renderPostings(payload) {
     const container = $("results");
     const postings = payload.postings || [];
@@ -353,18 +270,15 @@ machine learning engineer</textarea>
       const foot = [];
       if (p.employment_type) foot.push(escapeHtml(p.employment_type));
       if (p.posted_at) foot.push("posted " + new Date(p.posted_at).toLocaleDateString());
-      if (p.synced_at) foot.push("synced " + new Date(p.synced_at).toLocaleDateString());
-
-      const body = p.chunk_text || p.description_preview || "";
-      const bodyTruncated = p.description_preview && p.description_preview.length >= 300;
+      foot.push("synced " + new Date(p.synced_at).toLocaleDateString());
 
       return '<article class="posting">' +
         '<div class="posting-top"><div>' +
         '<p class="posting-meta"><span class="src-tag ' + escapeHtml(p.source) + '">' + escapeHtml(p.source) + '</span> &middot; ' +
         escapeHtml(p.company || "Unknown company") + (p.remote ? " &middot; Remote" : (p.location ? " &middot; " + escapeHtml(p.location) : "")) + '</p>' +
         '<h3>' + (p.apply_url ? '<a href="' + escapeHtml(p.apply_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.title) + '</a>' : escapeHtml(p.title)) + '</h3>' +
-        '</div>' + (typeof p.similarity === "number" ? '<div class="salary">' + p.similarity.toFixed(3) + ' match</div>' : (salary ? '<div class="salary">' + salary + '</div>' : '')) + '</div>' +
-        '<p class="posting-body">' + escapeHtml(body) + (bodyTruncated ? '\u2026' : '') + '</p>' +
+        '</div>' + (salary ? '<div class="salary">' + salary + '</div>' : '') + '</div>' +
+        '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '\u2026' : '') + '</p>' +
         '<p class="posting-foot">' + foot.join(" &middot; ") + '</p>' +
         '</article>';
     }).join("");
@@ -378,8 +292,7 @@ machine learning engineer</textarea>
     params.set("limit", "50");
     try {
       const payload = await callApi("/jobs?" + params.toString());
-      $("results-head-title").textContent = "Postings";
-      renderPostings({ postings: payload.postings });
+      renderPostings(payload);
     } catch (err) {
       $("results").innerHTML = '<div class="empty"><strong>Could not load postings</strong><p>' + escapeHtml(err.message) + '</p></div>';
     }
