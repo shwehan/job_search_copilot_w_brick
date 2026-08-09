@@ -229,7 +229,77 @@ def jobs_browse():
     limit = max(1, min(int(request.args.get("limit", 25)), 200))
     source = request.args.get("source", "").strip().lower()
     remote_only = request.args.get("remote_only", "").lower() in ("1", "true", "yes")
+    relevant_only = request.args.get("relevant_only", "").lower() in ("1", "true", "yes")
+    user_id = request.args.get("user_id", "").strip()  # Optional: specify user
 
+    clauses = []
+    params: list = []
+    
+    # If relevant_only is enabled, join with profiles table and filter
+    if relevant_only:
+        # Get the default profile for the user (or first available profile)
+        profile_query = f"""
+            SELECT target_roles, remote_preference, salary_min, 
+                   salary_currency, locations_preferred
+            FROM {config.PROFILES_TABLE}
+        """
+        if user_id:
+            profile_query += " WHERE user_id = %s AND is_default = true LIMIT 1"
+            profile_params = (user_id,)
+        else:
+            profile_query += " WHERE is_default = true LIMIT 1"
+            profile_params = ()
+        
+        profile_rows = lakebase.run_query(profile_query, profile_params)
+        if not profile_rows:
+            # No profile found, return empty result
+            return jsonify({"postings": [], "count": 0, "message": "No profile found. Please create a profile first."})
+        
+        profile = profile_rows[0]
+        
+        # Build relevance filters based on profile
+        # 1. Match target roles (case-insensitive search in title)
+        if profile.get("target_roles"):
+            role_conditions = []
+            for role in profile["target_roles"]:
+                role_conditions.append("LOWER(title) LIKE %s")
+                params.append(f"%{role.lower()}%")
+            if role_conditions:
+                clauses.append(f"({' OR '.join(role_conditions)})")
+        
+        # 2. Match remote preference
+        remote_pref = profile.get("remote_preference", "any")
+        if remote_pref == "remote_only":
+            clauses.append("remote = true")
+        elif remote_pref == "onsite":
+            clauses.append("remote = false")
+        # 'hybrid' and 'any' don't add constraints
+        
+        # 3. Match minimum salary (if job specifies salary)
+        if profile.get("salary_min"):
+            # Only filter if job has salary info and it's >= user's minimum
+            clauses.append("(salary_max IS NULL OR salary_max >= %s)")
+            params.append(profile["salary_min"])
+        
+        # 4. Match preferred locations (if specified)
+        if profile.get("locations_preferred") and len(profile["locations_preferred"]) > 0:
+            location_conditions = []
+            for loc in profile["locations_preferred"]:
+                if loc.strip():
+                    location_conditions.append("LOWER(location) LIKE %s")
+                    params.append(f"%{loc.lower()}%")
+            if location_conditions:
+                # Jobs with no location or matching location, or remote jobs
+                clauses.append(f"(remote = true OR location IS NULL OR {' OR '.join(location_conditions)})")
+    
+    # Apply legacy filters
+    if source:
+        clauses.append("source = %s")
+        params.append(source)
+    if remote_only:
+        clauses.append("remote = true")
+    
+    # Build final query
     sql = f"""
         SELECT id, source, title, company, location, remote,
                salary_min, salary_max, salary_currency, employment_type,
@@ -237,13 +307,6 @@ def jobs_browse():
                apply_url, posted_at, synced_at
         FROM {config.JOB_POSTINGS_TABLE}
     """
-    clauses = []
-    params: list = []
-    if source:
-        clauses.append("source = %s")
-        params.append(source)
-    if remote_only:
-        clauses.append("remote = true")
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
     sql += " ORDER BY posted_at DESC NULLS LAST, synced_at DESC LIMIT %s"
