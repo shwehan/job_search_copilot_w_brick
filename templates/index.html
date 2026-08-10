@@ -3,23 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Job Hunting Copilot</title>
+<title>🎯 AI Job Hunting Copilot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper:      #f7f5f0;
+    --paper:      #f5f7fa;
     --panel:      #ffffff;
-    --ink:        #1c1a17;
-    --ink-soft:   #635c50;
-    --ink-faint:  #9b9284;
-    --rule:       #ddd6c8;
-    --accent:     #1f5c4a;
-    --accent-dim: #e4ede8;
-    --tag-adzuna:   #2f6f9e;
-    --tag-usajobs:  #7a3b8f;
-    --tag-remoteok: #1f5c4a;
+    --ink:        #1a202c;
+    --ink-soft:   #4a5568;
+    --ink-faint:  #a0aec0;
+    --rule:       #e2e8f0;
+    --accent:     #0d9488;
+    --accent-hover: #0f766e;
+    --accent-dim: #ccfbf1;
+    --tag-adzuna:   #3b82f6;
+    --tag-usajobs:  #8b5cf6;
+    --tag-remoteok: #10b981;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
     --mono: "IBM Plex Mono", ui-monospace, monospace;
     --display: "Fraunces", Georgia, serif;
@@ -29,91 +33,102 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
 
-  .masthead { border-bottom: 1px solid var(--rule); background: var(--panel); }
-  .masthead-inner { max-width: 1100px; margin: 0 auto; padding: 24px 28px 18px; }
-  .wordmark { font-family: var(--display); font-weight: 600; font-size: 28px; letter-spacing: -0.01em; margin: 0; }
+  .masthead { border-bottom: 1px solid var(--rule); background: linear-gradient(135deg, var(--panel) 0%, #fafbfc 100%); box-shadow: var(--shadow-sm); }
+  .masthead-inner { max-width: 1100px; margin: 0 auto; padding: 28px 28px 22px; }
+  .wordmark { font-family: var(--display); font-weight: 600; font-size: 32px; letter-spacing: -0.01em; margin: 0; background: linear-gradient(135deg, var(--ink) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .wordmark span { color: var(--accent); font-style: italic; }
-  .tagline { color: var(--ink-soft); font-size: 14px; margin: 4px 0 0; max-width: 60ch; }
+  .tagline { color: var(--ink-soft); font-size: 14px; margin: 6px 0 0; max-width: 60ch; line-height: 1.6; }
 
   .statusline {
-    margin-top: 16px; padding: 9px 12px; border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    margin-top: 18px; padding: 12px 16px; border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px;
     background: var(--accent-dim); font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em;
-    color: var(--ink-soft); text-transform: uppercase; overflow-x: auto; white-space: nowrap;
+    color: var(--ink-soft); text-transform: uppercase; overflow-x: auto; white-space: nowrap; box-shadow: var(--shadow-sm);
   }
-  .statusline b { color: var(--ink); font-weight: 500; }
+  .statusline b { color: var(--ink); font-weight: 600; }
   .statusline .sep { color: var(--ink-faint); padding: 0 10px; }
-  .statusline .warn { color: #9e4a1f; }
+  .statusline .warn { color: #dc2626; font-weight: 600; }
 
-  .layout { max-width: 1100px; margin: 0 auto; padding: 26px 28px 72px; display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; padding: 20px 18px 56px; } .masthead-inner { padding: 20px 18px 16px; } }
+  .layout { max-width: 1100px; margin: 0 auto; padding: 32px 28px 72px; display: grid; grid-template-columns: 360px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; padding: 24px 18px 56px; } .masthead-inner { padding: 24px 18px 20px; } }
 
-  .panel { background: var(--panel); border: 1px solid var(--rule); padding: 20px; }
-  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 3px; }
-  .panel h2 { font-family: var(--display); font-weight: 600; font-size: 19px; margin: 0 0 4px; }
-  .panel p.note { color: var(--ink-soft); font-size: 13px; margin: 0 0 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--rule); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .panel:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+  .eyebrow::before { content: ''; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; }
+  .panel h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 8px; color: var(--ink); }
+  .panel p.note { color: var(--ink-soft); font-size: 13px; margin: 0 0 20px; line-height: 1.6; }
 
-  label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
-  .field + .field { margin-top: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; color: var(--ink); }
+  .field + .field { margin-top: 16px; }
   input[type="text"], input[type="number"], textarea, select {
-    width: 100%; padding: 9px 11px; border: 1px solid var(--rule); background: #fff; color: var(--ink);
-    font-family: var(--body); font-size: 14px;
+    width: 100%; padding: 11px 14px; border: 1px solid var(--rule); background: #fff; color: var(--ink);
+    font-family: var(--body); font-size: 14px; border-radius: 8px; transition: all 0.2s ease;
   }
-  textarea { resize: vertical; min-height: 84px; line-height: 1.5; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  input:hover, textarea:hover, select:hover { border-color: var(--accent); }
 
-  .checks { display: flex; gap: 16px; margin-top: 12px; font-size: 13px; color: var(--ink-soft); flex-wrap: wrap; }
-  .checks label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; cursor: pointer; }
-  input[type="checkbox"] { accent-color: var(--accent); }
+  .checks { display: flex; gap: 18px; margin-top: 14px; font-size: 14px; color: var(--ink-soft); flex-wrap: wrap; }
+  .checks label { display: flex; align-items: center; gap: 8px; font-weight: 500; margin: 0; cursor: pointer; transition: color 0.2s ease; }
+  .checks label:hover { color: var(--accent); }
+  input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; cursor: pointer; }
 
-  button { font-family: var(--body); font-size: 13.5px; font-weight: 600; padding: 10px 16px; border: 1px solid var(--accent);
-    background: var(--accent); color: #fff; cursor: pointer; }
-  button:hover:not(:disabled) { background: #15473a; }
-  button:disabled { opacity: 0.5; cursor: progress; }
-  button.secondary { background: transparent; color: var(--accent); }
+  button { font-family: var(--body); font-size: 14px; font-weight: 600; padding: 12px 20px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer; border-radius: 8px; transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm); }
+  button:hover:not(:disabled) { background: var(--accent-hover); box-shadow: var(--shadow); transform: translateY(-1px); }
+  button:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); box-shadow: none; }
   button.secondary:hover:not(:disabled) { background: var(--accent-dim); }
-  .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 
-  .feedback { margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--ink-faint); background: #faf9f5;
-    font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink-soft); white-space: pre-wrap; word-break: break-word; }
-  .feedback.ok { border-left-color: var(--accent); color: var(--ink); }
-  .feedback.error { border-left-color: #a1341f; color: #a1341f; }
+  .feedback { margin-top: 16px; padding: 12px 16px; border-left: 4px solid var(--ink-faint); background: #faf9f5; border-radius: 8px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--ink-soft); white-space: pre-wrap; word-break: break-word; box-shadow: var(--shadow-sm); }
+  .feedback.ok { border-left-color: var(--accent); color: var(--ink); background: var(--accent-dim); }
+  .feedback.error { border-left-color: #dc2626; color: #dc2626; background: #fee2e2; }
   .feedback:empty { display: none; }
 
-  .filters { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
-  .filters .field { margin: 0; flex: 0 0 160px; }
-  .filters .checks { margin: 0 0 9px; }
+  .filters { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
+  .filters .field { margin: 0; flex: 0 0 180px; }
+  .filters .checks { margin: 0 0 11px; }
 
-  .results-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 9px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
-  .results-head h2 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0; }
-  .results-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-transform: uppercase; }
+  .results-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 2px solid var(--rule); margin-bottom: 8px; }
+  .results-head h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; }
+  .results-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-transform: uppercase; font-weight: 600; }
 
-  .posting { background: var(--panel); border: 1px solid var(--rule); padding: 15px 17px; margin-top: 11px; }
-  .posting-top { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
-  .posting-meta { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
-  .src-tag { padding: 2px 6px; border-radius: 2px; color: #fff; font-weight: 500; }
+  .posting { background: var(--panel); border: 1px solid var(--rule); padding: 18px 20px; margin-top: 14px; border-radius: 10px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
+  .posting:hover { box-shadow: var(--shadow); border-color: var(--accent-dim); transform: translateY(-1px); }
+  .posting-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+  .posting-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .src-tag { padding: 3px 8px; border-radius: 4px; color: #fff; font-weight: 600; box-shadow: var(--shadow-sm); }
   .src-tag.adzuna { background: var(--tag-adzuna); }
   .src-tag.usajobs { background: var(--tag-usajobs); }
   .src-tag.remoteok { background: var(--tag-remoteok); }
-  .posting h3 { font-family: var(--display); font-weight: 600; font-size: 16px; margin: 0; }
-  .posting h3 a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--rule); }
-  .posting h3 a:hover { border-color: var(--accent); }
-  .posting-body { margin: 8px 0 0; color: var(--ink-soft); font-size: 13.5px; }
-  .posting-foot { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--rule); font-family: var(--mono); font-size: 10.5px;
-    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); }
-  .salary { flex: 0 0 auto; text-align: right; font-family: var(--mono); font-size: 13px; color: var(--accent); white-space: nowrap; }
-  .score { display: inline-block; margin-left: 7px; padding: 2px 6px; background: var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: 10.5px; font-weight: 600; }
+  .posting h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0; line-height: 1.4; }
+  .posting h3 a { color: inherit; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s ease; }
+  .posting h3 a:hover { border-color: var(--accent); color: var(--accent); }
+  .posting-body { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+  .posting-foot { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--rule); font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); display: flex; gap: 12px; flex-wrap: wrap; }
+  .salary { flex: 0 0 auto; text-align: right; font-family: var(--mono); font-size: 14px; color: var(--accent); font-weight: 600; white-space: nowrap; }
+  .score { display: inline-block; margin-left: 10px; padding: 4px 10px; background: var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 6px; box-shadow: var(--shadow-sm); }
 
-  .empty { border: 1px dashed var(--rule); padding: 32px 24px; text-align: center; color: var(--ink-soft); }
-  .empty strong { display: block; font-family: var(--display); font-weight: 600; font-size: 16px; color: var(--ink); margin-bottom: 5px; }
+  .empty { border: 2px dashed var(--rule); padding: 48px 28px; text-align: center; color: var(--ink-soft); border-radius: 12px; background: #fafbfc; }
+  .empty strong { display: block; font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--ink); margin-bottom: 8px; }
+  .empty p { margin: 0; font-size: 14px; line-height: 1.6; }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <header class="masthead">
   <div class="masthead-inner">
-    <h1 class="wordmark">Job Hunting <span>Copilot</span></h1>
+    <h1 class="wordmark">🎯 Job Hunting <span>Copilot</span></h1>
     <p class="tagline">Sync live postings, embed them with Databricks GTE, and retrieve configurable top-K semantic matches from Lakebase.</p>
-    <div class="statusline" id="statusline" aria-live="polite">Reading pipeline status&hellip;</div>
+    <div class="statusline" id="statusline" aria-live="polite">📊 Reading pipeline status&hellip;</div>
   </div>
 </header>
 
@@ -121,67 +136,70 @@
   <div>
     <section class="panel">
       <p class="eyebrow">Step 1</p>
-      <h2>Sync postings</h2>
+      <h2>🔄 Sync postings</h2>
       <p class="note">Searches every keyword against each configured source and upserts normalized postings into <code>job_postings</code>.</p>
 
       <div class="field">
-        <label for="keywords">Search keywords</label>
+        <label for="keywords">🔍 Search keywords</label>
         <textarea id="keywords" rows="4" placeholder="software engineer&#10;data engineer">software engineer
 data engineer
 machine learning engineer</textarea>
       </div>
 
       <div class="field">
-        <label for="location">Location (optional)</label>
+        <label for="location">📍 Location (optional)</label>
         <input type="text" id="location" placeholder="Austin, TX">
       </div>
 
       <div class="field">
-        <label for="limit">Postings per source, per keyword</label>
+        <label for="limit">📊 Postings per source, per keyword</label>
         <input type="number" id="limit" value="25" min="1" max="200">
       </div>
 
       <div class="actions">
-        <button id="btn-sync">Sync postings</button>
+        <button id="btn-sync">🚀 Sync postings</button>
       </div>
       <div class="feedback" id="sync-feedback" aria-live="polite"></div>
     </section>
 
-    <section class="panel" style="margin-top: 18px;">
+    <section class="panel" style="margin-top: 20px;">
       <p class="eyebrow">Step 2</p>
-      <h2>Embed postings</h2>
+      <h2>🤖 Embed postings</h2>
       <p class="note">Embeds only new or content-changed postings. The notebook is the recommended batch path; this button is useful for a small App smoke test.</p>
       <div class="field">
-        <label for="embed-limit">Maximum postings</label>
+        <label for="embed-limit">📈 Maximum postings</label>
         <input type="number" id="embed-limit" value="50" min="1" max="500">
       </div>
-      <div class="actions"><button id="btn-embed">Embed pending</button></div>
+      <div class="actions"><button id="btn-embed">⚡ Embed pending</button></div>
       <div class="feedback" id="embed-feedback" aria-live="polite"></div>
     </section>
   </div>
 
   <div>
-    <section class="panel" style="margin-bottom: 18px;">
+    <section class="panel" style="margin-bottom: 20px;">
       <p class="eyebrow">Browse</p>
-      <h2>Synced postings</h2>
-      <p class="note">Everything currently in Lakebase, newest first.</p>
+      <h2>🎯 Find your perfect job</h2>
+      <p class="note">Use natural language to search or browse all synced postings from Lakebase.</p>
 
       <div class="field">
-        <label for="semantic-query">Natural-language job search</label>
+        <label for="semantic-query">💬 Natural-language job search</label>
         <textarea id="semantic-query" rows="3" placeholder="senior data engineer with Databricks, Python, SQL, and AWS"></textarea>
       </div>
       <div class="filters">
-        <div class="field"><label for="top-k">Top K</label><input type="number" id="top-k" value="5" min="1" max="25"></div>
-        <div class="field"><label for="semantic-location">Location contains</label><input type="text" id="semantic-location" placeholder="New York"></div>
-        <div class="field"><label for="semantic-salary">Minimum salary</label><input type="number" id="semantic-salary" min="0" placeholder="100000"></div>
-        <div class="checks"><label><input type="checkbox" id="semantic-remote"> Remote only</label></div>
+        <div class="field"><label for="top-k">🎯 Top K</label><input type="number" id="top-k" value="5" min="1" max="25"></div>
+        <div class="field"><label for="semantic-location">📍 Location</label><input type="text" id="semantic-location" placeholder="New York"></div>
+        <div class="field"><label for="semantic-salary">💰 Min salary</label><input type="number" id="semantic-salary" min="0" placeholder="100000"></div>
+        <div class="checks">
+          <label><input type="checkbox" id="semantic-remote"> 🏠 Remote only</label>
+          <label><input type="checkbox" id="relevant-only"> ⭐ Relevant jobs only</label>
+        </div>
       </div>
-      <div class="actions"><button id="btn-semantic">Semantic search</button></div>
+      <div class="actions"><button id="btn-semantic">🔎 Semantic search</button></div>
       <div class="feedback" id="search-feedback" aria-live="polite"></div>
 
-      <div class="filters">
+      <div class="filters" style="margin-top: 28px;">
         <div class="field">
-          <label for="filter-source">Source</label>
+          <label for="filter-source">📂 Source</label>
           <select id="filter-source">
             <option value="">All</option>
             <option value="adzuna">Adzuna</option>
@@ -190,20 +208,20 @@ machine learning engineer</textarea>
           </select>
         </div>
         <div class="checks">
-          <label><input type="checkbox" id="filter-remote"> Remote only</label>
+          <label><input type="checkbox" id="filter-remote"> 🏠 Remote only</label>
         </div>
-        <button class="secondary" id="btn-refresh" type="button">Refresh</button>
+        <button class="secondary" id="btn-refresh" type="button">🔄 Refresh</button>
       </div>
     </section>
 
     <div class="results-head">
-      <h2>Postings</h2>
+      <h2>📋 Postings</h2>
       <span class="count" id="results-count"></span>
     </div>
     <div id="results">
       <div class="empty">
-        <strong>Nothing synced yet</strong>
-        <p>Sync a few keywords to pull postings into Lakebase.</p>
+        <strong>✨ Nothing synced yet</strong>
+        <p>Sync a few keywords to pull postings into Lakebase and start your job search.</p>
       </div>
     </div>
   </div>
@@ -237,12 +255,12 @@ machine learning engineer</textarea>
       const srcs = h.sources_configured || {};
       const srcLabel = (name, on) => (on ? "<b>" + name + "</b>" : '<span class="warn">' + name + " off</span>");
       line.innerHTML =
-        "Lakebase" +
+        "📊 Lakebase" +
         '<span class="sep">/</span>postings <b>' + String(stats.total_postings || 0).padStart(4, "0") + "</b>" +
         '<span class="sep">/</span>sources ' + [srcLabel("adzuna", srcs.adzuna), srcLabel("usajobs", srcs.usajobs), srcLabel("remoteok", srcs.remoteok)].join(", ") +
         (embeddings ? '<span class="sep">/</span>embedded <b>' + embeddings.embedded_postings + '</b> of ' + embeddings.total_postings : '');
     } catch (err) {
-      line.innerHTML = "Lakebase unreachable &mdash; " + escapeHtml(err.message);
+      line.innerHTML = "⚠️ Lakebase unreachable &mdash; " + escapeHtml(err.message);
     }
   }
 
@@ -254,7 +272,8 @@ machine learning engineer</textarea>
 
     const location = $("location").value.trim();
     button.disabled = true;
-    say(feedback, "Contacting Adzuna, USAJobs, and RemoteOK\u2026");
+    button.innerHTML = '🔄 Syncing<span class="spinner"></span>';
+    say(feedback, "📡 Contacting Adzuna, USAJobs, and RemoteOK…");
 
     try {
       const result = await callApi("/jobs/sync", {
@@ -266,17 +285,18 @@ machine learning engineer</textarea>
         })
       });
       const bySource = Object.entries(result.by_source || {}).map(([s, n]) => s + ": " + n).join(", ") || "none";
-      let message = "Synced " + result.synced + " postings (" + bySource + ").";
+      let message = "✅ Synced " + result.synced + " postings (" + bySource + ").";
       if (result.errors && result.errors.length) {
-        message += "\n" + result.errors.map((e) => e.source + " \u2014 " + e.error).join("\n");
+        message += "\n" + result.errors.map((e) => "⚠️ " + e.source + " — " + e.error).join("\n");
       }
       say(feedback, message, "ok");
       refreshStatus();
       loadPostings();
     } catch (err) {
-      say(feedback, err.message, "error");
+      say(feedback, "❌ " + err.message, "error");
     } finally {
       button.disabled = false;
+      button.innerHTML = "🚀 Sync postings";
     }
   });
 
@@ -286,7 +306,7 @@ machine learning engineer</textarea>
     $("results-count").textContent = postings.length ? postings.length + " shown" : "";
 
     if (!postings.length) {
-      container.innerHTML = '<div class="empty"><strong>No postings match</strong><p>Try syncing more keywords or clearing filters.</p></div>';
+      container.innerHTML = '<div class="empty"><strong>🔍 No postings match</strong><p>Try syncing more keywords or clearing filters.</p></div>';
       return;
     }
 
@@ -294,22 +314,23 @@ machine learning engineer</textarea>
       const salaryParts = [];
       if (p.salary_min) salaryParts.push("$" + Math.round(p.salary_min).toLocaleString());
       if (p.salary_max && p.salary_max !== p.salary_min) salaryParts.push("$" + Math.round(p.salary_max).toLocaleString());
-      const salary = salaryParts.length ? salaryParts.join(" \u2013 ") : "";
+      const salary = salaryParts.length ? salaryParts.join(" – ") : "";
 
       const foot = [];
-      if (p.employment_type) foot.push(escapeHtml(p.employment_type));
-      if (p.posted_at) foot.push("posted " + new Date(p.posted_at).toLocaleDateString());
-      foot.push("synced " + new Date(p.synced_at).toLocaleDateString());
+      if (p.employment_type) foot.push("💼 " + escapeHtml(p.employment_type));
+      if (p.posted_at) foot.push("📅 posted " + new Date(p.posted_at).toLocaleDateString());
+      foot.push("🔄 synced " + new Date(p.synced_at).toLocaleDateString());
 
       return '<article class="posting">' +
         '<div class="posting-top"><div>' +
-        '<p class="posting-meta"><span class="src-tag ' + escapeHtml(p.source) + '">' + escapeHtml(p.source) + '</span> &middot; ' +
-        escapeHtml(p.company || "Unknown company") + (p.remote ? " &middot; Remote" : (p.location ? " &middot; " + escapeHtml(p.location) : "")) + '</p>' +
+        '<p class="posting-meta"><span class="src-tag ' + escapeHtml(p.source) + '">' + escapeHtml(p.source) + '</span>' +
+        '<span>🏢 ' + escapeHtml(p.company || "Unknown company") + '</span>' +
+        (p.remote ? '<span>🏠 Remote</span>' : (p.location ? '<span>📍 ' + escapeHtml(p.location) + '</span>' : '')) + '</p>' +
         '<h3>' + (p.apply_url ? '<a href="' + escapeHtml(p.apply_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.title) + '</a>' : escapeHtml(p.title)) +
-        (p.similarity != null ? '<span class="score">' + (Number(p.similarity) * 100).toFixed(1) + '% match</span>' : '') + '</h3>' +
-        '</div>' + (salary ? '<div class="salary">' + salary + '</div>' : '') + '</div>' +
-        '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '\u2026' : '') + '</p>' +
-        '<p class="posting-foot">' + foot.join(" &middot; ") + '</p>' +
+        (p.similarity != null ? '<span class="score">⭐ ' + (Number(p.similarity) * 100).toFixed(1) + '% match</span>' : '') + '</h3>' +
+        '</div>' + (salary ? '<div class="salary">💰 ' + salary + '</div>' : '') + '</div>' +
+        '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '…' : '') + '</p>' +
+        '<p class="posting-foot">' + foot.join(" · ") + '</p>' +
         '</article>';
     }).join("");
   }
@@ -324,7 +345,7 @@ machine learning engineer</textarea>
       const payload = await callApi("/jobs?" + params.toString());
       renderPostings(payload);
     } catch (err) {
-      $("results").innerHTML = '<div class="empty"><strong>Could not load postings</strong><p>' + escapeHtml(err.message) + '</p></div>';
+      $("results").innerHTML = '<div class="empty"><strong>⚠️ Could not load postings</strong><p>' + escapeHtml(err.message) + '</p></div>';
     }
   }
 
@@ -335,24 +356,26 @@ machine learning engineer</textarea>
   $("btn-embed").addEventListener("click", async () => {
     const button = $("btn-embed"), feedback = $("embed-feedback");
     button.disabled = true;
-    say(feedback, "Calling the hosted embedding endpoint…");
+    button.innerHTML = '⚡ Embedding<span class="spinner"></span>';
+    say(feedback, "🤖 Calling the hosted embedding endpoint…");
     try {
       const result = await callApi("/jobs/embed", {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({limit: Number($("embed-limit").value) || 50, batch_size: 8})
       });
-      say(feedback, "Embedded " + result.embedded_postings + " postings and wrote " + result.written_chunks + " chunks.", "ok");
+      say(feedback, "✅ Embedded " + result.embedded_postings + " postings and wrote " + result.written_chunks + " chunks.", "ok");
       refreshStatus();
-    } catch (err) { say(feedback, err.message, "error"); }
-    finally { button.disabled = false; }
+    } catch (err) { say(feedback, "❌ " + err.message, "error"); }
+    finally { button.disabled = false; button.innerHTML = "⚡ Embed pending"; }
   });
 
   $("btn-semantic").addEventListener("click", async () => {
     const button = $("btn-semantic"), feedback = $("search-feedback");
     const text = $("semantic-query").value.trim();
-    if (!text) { say(feedback, "Describe the kind of job you want.", "error"); return; }
+    if (!text) { say(feedback, "❌ Describe the kind of job you want.", "error"); return; }
     button.disabled = true;
-    say(feedback, "Embedding your query and searching Lakebase…");
+    button.innerHTML = '🔎 Searching<span class="spinner"></span>';
+    say(feedback, "🤖 Embedding your query and searching Lakebase…");
     try {
       const source = $("filter-source").value;
       const payload = await callApi("/jobs/search", {
@@ -362,13 +385,14 @@ machine learning engineer</textarea>
           sources: source ? [source] : [],
           remote_only: $("semantic-remote").checked,
           location: $("semantic-location").value.trim(),
-          minimum_salary: $("semantic-salary").value ? Number($("semantic-salary").value) : null
+          minimum_salary: $("semantic-salary").value ? Number($("semantic-salary").value) : null,
+          relevant_only: $("relevant-only").checked
         })
       });
       renderPostings(payload);
-      say(feedback, "Returned " + payload.postings.length + " semantic matches.", "ok");
-    } catch (err) { say(feedback, err.message, "error"); }
-    finally { button.disabled = false; }
+      say(feedback, "✅ Returned " + payload.postings.length + " semantic matches.", "ok");
+    } catch (err) { say(feedback, "❌ " + err.message, "error"); }
+    finally { button.disabled = false; button.innerHTML = "🔎 Semantic search"; }
   });
 
   refreshStatus();
