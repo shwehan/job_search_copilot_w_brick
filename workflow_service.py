@@ -176,6 +176,7 @@ def update_application_stage(user_id: str, application_id: str, stage: str) -> d
     row = _write_returning(
         f"""UPDATE {config.APPLICATIONS_TABLE}
             SET stage = %s, stage_updated_at = now(),
+                is_stale = false, stale_flagged_at = NULL,
                 applied_at = CASE WHEN %s = 'applied' AND applied_at IS NULL THEN now() ELSE applied_at END
             WHERE id = %s AND user_id = %s
             RETURNING id, job_posting_id, stage, stage_updated_at, applied_at""",
@@ -189,7 +190,7 @@ def update_application_stage(user_id: str, application_id: str, stage: str) -> d
 def list_pipeline(user_id: str) -> dict:
     applications = lakebase.run_query(
         f"""SELECT a.id, a.profile_id, a.job_posting_id, a.stage,
-                   a.stage_updated_at, a.applied_at, a.notes,
+                   a.stage_updated_at, a.applied_at, a.notes, a.is_stale,
                    p.title, p.company, p.location, p.remote, p.apply_url,
                    COALESCE(n.note_count, 0) AS note_count,
                    n.next_follow_up

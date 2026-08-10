@@ -1,0 +1,29 @@
+resources:
+  jobs:
+    phase4_job_ingestion:
+      name: job-copilot-phase4-spark-pipeline
+      description: Spark normalization, Lakebase upsert, incremental GTE embedding, and stale-application scan.
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: "0 0 7 * * ?"
+        timezone_id: America/New_York
+        pause_status: PAUSED
+      tasks:
+        - task_key: spark_ingest_embed
+          notebook_task:
+            notebook_path: ../notebooks/phase4_spark_job.ipynb
+            base_parameters:
+              keywords: "data engineer;analytics engineer;machine learning engineer"
+              location: ""
+              limit_per_source: "50"
+              embed_limit: "500"
+              stale_days: "14"
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - databricks-sdk>=0.30.0
+              - pg8000>=1.31.2
+              - requests>=2.32.3
+              - beautifulsoup4>=4.12.3

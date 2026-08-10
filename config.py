@@ -18,6 +18,7 @@ APPLICATIONS_TABLE = os.environ.get("APPLICATIONS_TABLE", "applications")
 SAVED_JOBS_TABLE = os.environ.get("SAVED_JOBS_TABLE", "saved_jobs")
 INTERVIEW_NOTES_TABLE = os.environ.get("INTERVIEW_NOTES_TABLE", "interview_notes")
 CONTACTS_TABLE = os.environ.get("CONTACTS_TABLE", "contacts")
+PIPELINE_RUNS_TABLE = os.environ.get("PIPELINE_RUNS_TABLE", "pipeline_runs")
 JOB_EMBEDDINGS_TABLE = os.environ.get(
     "JOB_EMBEDDINGS_TABLE", "job_posting_embeddings"
 )

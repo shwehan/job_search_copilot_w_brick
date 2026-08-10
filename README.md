@@ -1,12 +1,13 @@
-# AI Job Hunting Copilot — Phases 1–3
+# AI Job Hunting Copilot — Phases 1–4
 
 Harvests live job postings from three sources — Adzuna, USAJobs, and RemoteOK — normalizes them
 to one schema, and stores them in Lakebase (Databricks-managed Postgres).
 
 Phase 1 provides ingestion and Lakebase storage. Phase 2 adds chunked, hosted GTE embeddings and
 configurable top-K pgvector retrieval. Phase 3 adds profiles, resume upload, bookmarks, and a
-persistent application pipeline. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for the remaining
-waterfall roadmap — a scheduled sync job (Phase 4), an MCP server + a
+persistent application pipeline. Phase 4 adds the required Spark data pipeline and scheduled
+incremental refresh. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for the remaining
+waterfall roadmap — an MCP server + a
 Databricks Agent Bricks agent (Phase 5), and the differentiating features carried over from a prior
 personal project (Phase 6).
 
@@ -22,6 +23,9 @@ job-hunting-copilot/
 ├── embedding_model.py     Hosted Databricks GTE client (1024 dimensions)
 ├── job_embeddings.py      Chunking, incremental embedding, pgvector top-K search
 ├── workflow_service.py    Reusable profile/application operations for UI + future MCP
+├── phase4_pipeline.py      Spark preparation + scheduled orchestration
+├── databricks.yml          Declarative Automation Bundle entry point
+├── resources/              Serverless scheduled-job definition
 ├── lakebase.py            Lakebase connection helper (pg8000)
 ├── secrets_helper.py      Generic Databricks-secret resolution (env var, else secret)
 ├── config.py               Table names, harvest defaults
@@ -45,6 +49,8 @@ job-hunting-copilot/
 │   ├── 14_verify_phase2_schema.sql
 │   ├── 15_verify_phase2_pipeline.sql
 │   ├── 16_verify_phase3_workflow.sql
+│   ├── 17_create_pipeline_runs.sql
+│   ├── 18_verify_phase4_pipeline.sql
 │   └── README.md
 ├── notebooks/
 │   └── ingest_job_embeddings.ipynb
@@ -55,6 +61,7 @@ job-hunting-copilot/
 ```
 
 See [`PHASE3_UPDATE.md`](PHASE3_UPDATE.md) for the dashboard smoke test.
+See [`PHASE4_UPDATE.md`](PHASE4_UPDATE.md) for the Spark job setup and acceptance checks.
 
 ---
 
@@ -114,7 +121,7 @@ databricks secrets put-acl database <app-service-principal> READ
 
 ### 4. Create the Lakebase schema
 
-Run the scripts in `sql/`, **in order** (`01` through `13`; `10`, `14`, `15`, and `16` are inspection-only), against your
+Run the scripts in `sql/`, **in order** (`01` through `13` plus `17`; `10`, `14`, `15`, `16`, and `18` are inspection-only), against your
 Lakebase database — via the Databricks SQL editor, `psql`, or any Postgres client. See
 [`sql/README.md`](sql/README.md) for the full run order and rationale.
 
@@ -169,6 +176,7 @@ and what to do either way.
 | `GET` | `/api/pipeline` | Read the user's Lakebase-backed board |
 | `POST` | `/api/applications/<id>/notes` | Add interview/follow-up notes |
 | `POST` | `/api/contacts` | Add a recruiter or hiring contact |
+| `GET` | `/jobs/pipeline/status` | Read the latest Phase 4 scheduled-run result |
 
 ### Sync
 
@@ -240,6 +248,16 @@ posting's best-matching chunk. Re-running embedding skips unchanged `content_has
 4. Choose a workspace identity, create a profile, and upload a UTF-8 `.txt` or `.md` resume.
 5. Search for a job, bookmark it, track it, change its stage, and add a note.
 6. Refresh the page to confirm persistence, then run `sql/16_verify_phase3_workflow.sql`.
+
+## Databricks Phase 4 run order
+
+1. Pull the update and run `sql/17_create_pipeline_runs.sql` against Lakebase.
+2. Attach Serverless compute to `notebooks/phase4_spark_job.ipynb`.
+3. Add the non-Spark dependencies listed in `PHASE4_UPDATE.md` through the notebook Environment panel.
+4. Run the notebook manually and inspect its Spark metrics and final run-history row.
+5. Run `sql/18_verify_phase4_pipeline.sql`; unchanged postings should have no missing current-hash embeddings.
+6. Create the scheduled notebook Job in the UI, or validate/deploy the included bundle configuration.
+7. Keep the schedule paused until two manual runs demonstrate idempotency.
 
 ---
 

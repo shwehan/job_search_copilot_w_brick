@@ -345,6 +345,27 @@ def jobs_embedding_status():
     return jsonify(job_embeddings.embedding_status())
 
 
+@app.route("/jobs/pipeline/status")
+def scheduled_pipeline_status():
+    """Latest Phase 4 scheduled-run record, when SQL 17 has been applied."""
+    if not lakebase.table_exists(config.PIPELINE_RUNS_TABLE):
+        return jsonify({"configured": False, "message": "Run SQL 17 to enable Phase 4 history."})
+    rows = lakebase.run_query(
+        f"""SELECT id, status, started_at, finished_at, fetched_rows,
+                   prepared_rows, synced_rows, embedded_postings,
+                   written_chunks, stale_applications, source_errors, error_message
+            FROM {config.PIPELINE_RUNS_TABLE}
+            ORDER BY started_at DESC LIMIT 1"""
+    )
+    row = rows[0] if rows else None
+    if row:
+        for key in ("started_at", "finished_at"):
+            if row.get(key) is not None:
+                row[key] = row[key].isoformat()
+        row["id"] = str(row["id"])
+    return jsonify({"configured": True, "latest_run": row})
+
+
 @app.route("/jobs/embed", methods=["POST"])
 def jobs_embed():
     """Embed new or content-changed postings with the hosted GTE endpoint."""

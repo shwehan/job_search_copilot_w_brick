@@ -1,4 +1,4 @@
-# Lakebase schema — Phases 1–3
+# Lakebase schema — Phases 1–4
 
 Run these against your Lakebase Postgres database, **in order**, before running anything else.
 Any Postgres client works: the Databricks SQL editor pointed at the Lakebase instance, `psql`, or
@@ -22,6 +22,8 @@ a notebook cell using `lakebase.connection_parts()`.
 | `14_verify_phase2_schema.sql` | (inspection only) |
 | `15_verify_phase2_pipeline.sql` | Verifies embedded rows, model coverage, changed postings, and cosine index |
 | `16_verify_phase3_workflow.sql` | Inspects workflow counts, stage totals, relationships, and recent activity |
+| `17_create_pipeline_runs.sql` | `pipeline_runs` audit history for scheduled Spark jobs |
+| `18_verify_phase4_pipeline.sql` | Inspects run history, embedding completeness, and stale applications |
 
 Order matters: `04` must run before `05` (skill joins reference `job_postings`), and `02`/`04` must
 run before `06` (`applications` references both `profiles` and `job_postings`). `04` must also run
