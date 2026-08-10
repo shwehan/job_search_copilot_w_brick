@@ -10,9 +10,12 @@ resources:
 env:
   - name: LAKEBASE_SECRET_SCOPE
     value: "database"
+
   - name: LAKEBASE_SECRET_KEY
     value: "lakebase-url"
+
   - name: DATABRICKS_EMBEDDING_MODEL
     value: "databricks-gte-large-en"
+
   - name: DATABRICKS_CHAT_MODEL
-    value: "databricks-claude-sonnet-4-5"
+    value: "databricks-meta-llama-3-3-70b-instruct"

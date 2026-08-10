@@ -1,0 +1,63 @@
+
+================================================================================
+🔧 AGENT CONTINUOUS CHAT FIX - SUMMARY
+================================================================================
+
+PROBLEM:
+--------
+Your agent at https://agent-job-search-7474660939919544.aws.databricksapps.com
+could handle the first message but failed on the second message with error:
+"Unhandled item type or structure: {'status': None, ...}"
+
+ROOT CAUSE:
+-----------
+The agent was returning response items with 'status': None, which broke the
+conversation history when those items were included in subsequent messages.
+The MLflow agent server couldn't process items with None status.
+
+FIX APPLIED:
+------------
+Updated file: 
+  /databricks_apps/agent-job-search_.../agent_server/agent.py
+
+Changed the invoke() function to:
+  1. Iterate through all response items from the agent
+  2. Check if any message items have 'status': None  
+  3. Set status to 'completed' for those items
+  4. Filter and handle items properly before returning
+
+This ensures all items in the conversation history have valid status fields.
+
+OTHER FIXES:
+------------
+- Created MLflow experiment: /Users/lanshanoar@gmail.com/agent-job-search
+  (Experiment ID: 2284974328999251)
+- Updated databricks.yml with the experiment ID
+- Fixed app name binding in bundle configuration
+
+DEPLOYMENT:
+-----------
+✅ Code has been updated
+✅ App has been restarted  
+⏳ App is currently STARTING (wait 1-2 more minutes)
+
+TESTING:
+--------
+Once the app is ACTIVE (check status at Compute -> Apps):
+1. Go to: https://agent-job-search-7474660939919544.aws.databricksapps.com
+2. Send your first message (should work as before)
+3. Send a second message (THIS SHOULD NOW WORK!)
+4. Continue chatting - you can now have continuous conversations! 🎉
+
+FILES MODIFIED:
+---------------
+1. /databricks_apps/agent-job-search_2026_08_10-03_35/agent-openai-agents-sdk/
+   agent_server/agent.py
+   
+2. /databricks_apps/agent-job-search_2026_08_10-03_35/agent-openai-agents-sdk/
+   databricks.yml
+
+These files are in the exported agent app directory, separate from your main
+job_search_copilot_w_brick project.
+
+================================================================================

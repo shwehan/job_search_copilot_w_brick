@@ -14,7 +14,7 @@ def _client():
 
 def embed_query(text: str) -> str:
     response = _client().serving_endpoints.query(
-        name=config.EMBEDDING_MODEL, inputs=[text]
+        name=config.EMBEDDING_MODEL, input=[text]
     )
     data = response.data or []
     vector = getattr(data[0], "embedding", None) if data else None

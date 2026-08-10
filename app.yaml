@@ -50,4 +50,4 @@ env:
   # After exporting the Playground agent to a Databricks App, paste its URL
   # here and redeploy to enable the dashboard's Ask Copilot button.
   - name: AGENT_APP_URL
-    value: ""
+    value: "https://agent-job-search-7474660939919544.aws.databricksapps.com"
