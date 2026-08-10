@@ -1,11 +1,12 @@
-# AI Job Hunting Copilot — Phases 1–2: Ingestion + Semantic Search
+# AI Job Hunting Copilot — Phases 1–3
 
 Harvests live job postings from three sources — Adzuna, USAJobs, and RemoteOK — normalizes them
 to one schema, and stores them in Lakebase (Databricks-managed Postgres).
 
 Phase 1 provides ingestion and Lakebase storage. Phase 2 adds chunked, hosted GTE embeddings and
-configurable top-K pgvector retrieval. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for the remaining
-waterfall roadmap — a human-facing dashboard workflow (Phase 3), a scheduled sync job (Phase 4), an MCP server + a
+configurable top-K pgvector retrieval. Phase 3 adds profiles, resume upload, bookmarks, and a
+persistent application pipeline. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for the remaining
+waterfall roadmap — a scheduled sync job (Phase 4), an MCP server + a
 Databricks Agent Bricks agent (Phase 5), and the differentiating features carried over from a prior
 personal project (Phase 6).
 
@@ -20,6 +21,7 @@ job-hunting-copilot/
 ├── ingestion.py           Upsert logic (job_postings)
 ├── embedding_model.py     Hosted Databricks GTE client (1024 dimensions)
 ├── job_embeddings.py      Chunking, incremental embedding, pgvector top-K search
+├── workflow_service.py    Reusable profile/application operations for UI + future MCP
 ├── lakebase.py            Lakebase connection helper (pg8000)
 ├── secrets_helper.py      Generic Databricks-secret resolution (env var, else secret)
 ├── config.py               Table names, harvest defaults
@@ -42,6 +44,7 @@ job-hunting-copilot/
 │   ├── 13_add_profile_resume_embedding.sql
 │   ├── 14_verify_phase2_schema.sql
 │   ├── 15_verify_phase2_pipeline.sql
+│   ├── 16_verify_phase3_workflow.sql
 │   └── README.md
 ├── notebooks/
 │   └── ingest_job_embeddings.ipynb
@@ -50,6 +53,8 @@ job-hunting-copilot/
 ├── CAPSTONE_PLAN.md         Full project roadmap, Phases 1-8
 └── .env.example
 ```
+
+See [`PHASE3_UPDATE.md`](PHASE3_UPDATE.md) for the dashboard smoke test.
 
 ---
 
@@ -109,7 +114,7 @@ databricks secrets put-acl database <app-service-principal> READ
 
 ### 4. Create the Lakebase schema
 
-Run the scripts in `sql/`, **in order** (`01` through `13`; `10`, `14`, and `15` are inspection-only), against your
+Run the scripts in `sql/`, **in order** (`01` through `13`; `10`, `14`, `15`, and `16` are inspection-only), against your
 Lakebase database — via the Databricks SQL editor, `psql`, or any Postgres client. See
 [`sql/README.md`](sql/README.md) for the full run order and rationale.
 
@@ -155,6 +160,15 @@ and what to do either way.
 | `GET` | `/jobs/embeddings/status` | Posting/chunk embedding coverage |
 | `POST` | `/jobs/embed` | Embed new or content-changed postings |
 | `POST` | `/jobs/search` | Natural-language top-K semantic retrieval |
+| `POST` | `/api/users/session` | Select or create a development workspace identity |
+| `GET/POST` | `/api/profiles` | List or create resume/search profiles |
+| `POST` | `/api/profiles/<id>/resume` | Upload UTF-8 `.txt`/`.md` resume text |
+| `POST` | `/api/saved-jobs` | Bookmark a posting |
+| `POST` | `/api/applications` | Add a posting to the formal pipeline |
+| `PATCH` | `/api/applications/<id>/stage` | Move an application between stages |
+| `GET` | `/api/pipeline` | Read the user's Lakebase-backed board |
+| `POST` | `/api/applications/<id>/notes` | Add interview/follow-up notes |
+| `POST` | `/api/contacts` | Add a recruiter or hiring contact |
 
 ### Sync
 
@@ -217,6 +231,15 @@ posting's best-matching chunk. Re-running embedding skips unchanged `content_has
 5. Grant the App service principal **CAN QUERY** on the configured GTE endpoint.
 6. Redeploy the existing App.
 7. Test **Embed pending** and semantic **Top K** in the UI.
+
+## Databricks Phase 3 run order
+
+1. Pull this update into the existing Databricks Git folder.
+2. No new DDL is required; the workflow uses the Phase 1 tables already created.
+3. Redeploy the existing App from the same workspace folder.
+4. Choose a workspace identity, create a profile, and upload a UTF-8 `.txt` or `.md` resume.
+5. Search for a job, bookmark it, track it, change its stage, and add a note.
+6. Refresh the page to confirm persistence, then run `sql/16_verify_phase3_workflow.sql`.
 
 ---
 

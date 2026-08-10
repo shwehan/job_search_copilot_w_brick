@@ -1,4 +1,4 @@
-# Lakebase schema — Phases 1 and 2
+# Lakebase schema — Phases 1–3
 
 Run these against your Lakebase Postgres database, **in order**, before running anything else.
 Any Postgres client works: the Databricks SQL editor pointed at the Lakebase instance, `psql`, or
@@ -21,11 +21,13 @@ a notebook cell using `lakebase.connection_parts()`.
 | `13_add_profile_resume_embedding.sql` | Adds `resume_embedding`/`resume_content_hash`/`resume_embedded_at` to `profiles` |
 | `14_verify_phase2_schema.sql` | (inspection only) |
 | `15_verify_phase2_pipeline.sql` | Verifies embedded rows, model coverage, changed postings, and cosine index |
+| `16_verify_phase3_workflow.sql` | Inspects workflow counts, stage totals, relationships, and recent activity |
 
 Order matters: `04` must run before `05` (skill joins reference `job_postings`), and `02`/`04` must
 run before `06` (`applications` references both `profiles` and `job_postings`). `04` must also run
 before `12` (`job_posting_embeddings` references `job_postings`), and `02` before `13` (it alters
-`profiles`).
+`profiles`). Phase 3 needs no new tables: it activates the workflow tables created in SQL `01–09`.
+SQL `16` is inspection-only and safe to rerun after dashboard testing.
 
 ## Why 10 tables, not 8
 

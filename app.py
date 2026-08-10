@@ -1,5 +1,5 @@
 """
-AI Job Hunting Copilot -- Phases 1 and 2: ingestion and semantic retrieval.
+AI Job Hunting Copilot -- Phases 1-3: ingestion, retrieval, and workflow.
 
 Harvests postings from Adzuna, USAJobs, and RemoteOK, normalizes them to one
 schema, and stores them in Lakebase. Phase 2 adds hosted GTE embeddings and
@@ -30,6 +30,7 @@ import ingestion
 import lakebase
 import secrets_helper
 import job_embeddings
+import workflow_service
 from job_client import AdzunaClient, JobSearchClient, RemoteOKClient, USAJobsClient
 
 logging.basicConfig(level=logging.INFO)
@@ -54,7 +55,9 @@ _UNDEFINED_TABLE = "42P01"
 @app.errorhandler(Exception)
 def handle_exception(err):
     """Always answer with JSON so a fetch().json() caller never sees HTML."""
-    status = getattr(err, "code", 500)
+    status = 400 if isinstance(err, ValueError) else getattr(err, "code", 500)
+    if isinstance(err, LookupError):
+        status = 404
     if not isinstance(status, int):
         status = 500
 
@@ -67,6 +70,13 @@ def handle_exception(err):
 
 def _json_body() -> dict:
     return request.get_json(silent=True) or {}
+
+
+def _user_id(body: dict | None = None) -> str:
+    value = ((body or {}).get("user_id") or request.args.get("user_id") or "").strip()
+    if not value:
+        raise ValueError("user_id is required. Select your workspace identity first.")
+    return value
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +378,101 @@ def jobs_semantic_search():
     except (TypeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
     return jsonify({"query": search_text, "top_k": len(rows), "postings": rows})
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: profiles, resume, bookmarks, and application pipeline
+# ---------------------------------------------------------------------------
+
+
+@app.route("/api/users/session", methods=["POST"])
+def create_user_session():
+    """Get or create the selected development user (this is not authentication)."""
+    body = _json_body()
+    return jsonify(workflow_service.get_or_create_user(body.get("email"), body.get("display_name")))
+
+
+@app.route("/api/profiles")
+def profiles_list():
+    return jsonify({"profiles": workflow_service.list_profiles(_user_id())})
+
+
+@app.route("/api/profiles", methods=["POST"])
+def profiles_create():
+    body = _json_body()
+    return jsonify(workflow_service.create_profile(_user_id(body), body)), 201
+
+
+@app.route("/api/profiles/<profile_id>/resume", methods=["POST"])
+def profiles_upload_resume(profile_id):
+    """Accept a UTF-8 .txt/.md resume and store its text in Lakebase."""
+    user_id = _user_id()
+    upload = request.files.get("resume")
+    if not upload or not upload.filename:
+        return jsonify({"error": "Choose a .txt or .md resume file."}), 400
+    suffix = os.path.splitext(upload.filename)[1].lower()
+    if suffix not in (".txt", ".md"):
+        return jsonify({"error": "Phase 3 accepts UTF-8 .txt or .md resumes."}), 400
+    raw = upload.read(250001)
+    if len(raw) > 250000:
+        return jsonify({"error": "Resume file must be 250 KB or smaller."}), 400
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return jsonify({"error": "Resume must be UTF-8 text."}), 400
+    row = workflow_service.upload_resume(user_id, profile_id, upload.filename, text)
+    if not row:
+        return jsonify({"error": "Profile not found for this user."}), 404
+    return jsonify(row)
+
+
+@app.route("/api/saved-jobs", methods=["POST"])
+def saved_jobs_create():
+    body = _json_body()
+    return jsonify(workflow_service.save_job(
+        _user_id(body), body.get("job_posting_id"), body.get("note")
+    )), 201
+
+
+@app.route("/api/saved-jobs/<job_posting_id>", methods=["DELETE"])
+def saved_jobs_delete(job_posting_id):
+    return jsonify({"deleted": workflow_service.unsave_job(_user_id(), job_posting_id)})
+
+
+@app.route("/api/applications", methods=["POST"])
+def applications_create():
+    body = _json_body()
+    return jsonify(workflow_service.track_application(
+        _user_id(body), body.get("job_posting_id"), body.get("profile_id")
+    )), 201
+
+
+@app.route("/api/applications/<application_id>/stage", methods=["PATCH"])
+def applications_update_stage(application_id):
+    body = _json_body()
+    return jsonify(workflow_service.update_application_stage(
+        _user_id(body), application_id, str(body.get("stage") or "")
+    ))
+
+
+@app.route("/api/pipeline")
+def pipeline_list():
+    return jsonify(workflow_service.list_pipeline(_user_id()))
+
+
+@app.route("/api/applications/<application_id>/notes", methods=["POST"])
+def interview_notes_create(application_id):
+    body = _json_body()
+    row = workflow_service.add_interview_note(_user_id(body), application_id, body)
+    if not row:
+        return jsonify({"error": "Application not found for this user."}), 404
+    return jsonify(row), 201
+
+
+@app.route("/api/contacts", methods=["POST"])
+def contacts_create():
+    body = _json_body()
+    return jsonify(workflow_service.add_contact(_user_id(body), body)), 201
 
 
 if __name__ == "__main__":

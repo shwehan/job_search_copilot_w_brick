@@ -120,6 +120,19 @@
 
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .workspace { max-width: 1500px; margin: 0 auto; padding: 0 28px 72px; }
+  .workspace-grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+  .board { display: grid; grid-template-columns: repeat(5, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+  .lane { background: #f8fafc; border: 1px solid var(--rule); border-radius: 10px; padding: 12px; min-height: 180px; }
+  .lane h3 { margin: 0 0 10px; font-size: 13px; text-transform: capitalize; }
+  .card { background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+  .card strong { display: block; font-size: 13px; line-height: 1.35; }
+  .card small { color: var(--ink-soft); }
+  .card select { margin-top: 9px; padding: 7px; font-size: 12px; }
+  .compact { padding: 8px 11px; font-size: 12px; }
+  .job-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .identity { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+  @media (max-width: 880px) { .workspace { padding: 0 18px 56px; } .workspace-grid { grid-template-columns: 1fr; } .identity { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -227,8 +240,48 @@ machine learning engineer</textarea>
   </div>
 </main>
 
+<section class="workspace" id="workspace">
+  <div class="panel" style="margin-bottom:20px">
+    <p class="eyebrow">Phase 3 workspace</p>
+    <h2>👤 Choose your workspace identity</h2>
+    <p class="note">This selects which Lakebase records you see; it is a development identity, not login authentication.</p>
+    <div class="identity">
+      <div class="field"><label for="user-email">Email</label><input id="user-email" type="text" placeholder="you@example.com"></div>
+      <div class="field"><label for="display-name">Display name</label><input id="display-name" type="text" placeholder="Your name"></div>
+      <button id="btn-user">Use workspace</button>
+    </div>
+    <div class="feedback" id="user-feedback"></div>
+  </div>
+
+  <div class="workspace-grid">
+    <div>
+      <section class="panel">
+        <p class="eyebrow">Profile</p><h2>📄 Resume profile</h2>
+        <div class="field"><label for="profile-label">Profile label</label><input id="profile-label" type="text" value="default"></div>
+        <div class="field"><label for="profile-roles">Target roles (comma-separated)</label><input id="profile-roles" type="text" placeholder="Data Engineer, Analytics Engineer"></div>
+        <div class="field"><label for="profile-locations">Preferred locations</label><input id="profile-locations" type="text" placeholder="New York, Remote"></div>
+        <div class="field"><label for="profile-remote">Work preference</label><select id="profile-remote"><option value="any">Any</option><option value="remote_only">Remote only</option><option value="hybrid">Hybrid</option><option value="onsite">Onsite</option></select></div>
+        <div class="actions"><button id="btn-profile">Create profile</button></div>
+        <div class="field"><label for="profile-select">Active profile</label><select id="profile-select"><option value="">Create a profile first</option></select></div>
+        <div class="field"><label for="resume-file">Upload resume (.txt or .md)</label><input id="resume-file" type="file" accept=".txt,.md,text/plain,text/markdown"></div>
+        <div class="actions"><button id="btn-resume" class="secondary">Upload to Lakebase</button></div>
+        <div class="feedback" id="profile-feedback"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="results-head"><h2>🗂 Application pipeline</h2><span class="count" id="pipeline-count"></span></div>
+      <p class="note">Track a job from the search results, then move it through the pipeline. Every change persists in Lakebase.</p>
+      <div class="board" id="pipeline-board"></div>
+      <div class="feedback" id="pipeline-feedback"></div>
+    </section>
+  </div>
+</section>
+
 <script>
   const $ = (id) => document.getElementById(id);
+  const stages = ["saved", "applied", "interviewing", "rejected", "offer"];
+  let activeUser = JSON.parse(localStorage.getItem("jobCopilotUser") || "null");
   const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
   function say(node, message, kind) {
@@ -331,6 +384,8 @@ machine learning engineer</textarea>
         '</div>' + (salary ? '<div class="salary">💰 ' + salary + '</div>' : '') + '</div>' +
         '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '…' : '') + '</p>' +
         '<p class="posting-foot">' + foot.join(" · ") + '</p>' +
+        '<div class="job-actions"><button class="compact save-job" data-job-id="' + escapeHtml(p.id) + '">🔖 Save</button>' +
+        '<button class="compact secondary track-job" data-job-id="' + escapeHtml(p.id) + '">📌 Track application</button></div>' +
         '</article>';
     }).join("");
   }
@@ -395,8 +450,99 @@ machine learning engineer</textarea>
     finally { button.disabled = false; button.innerHTML = "🔎 Semantic search"; }
   });
 
+  function requireUser() {
+    if (!activeUser) throw new Error("Choose your workspace identity first.");
+    return activeUser.id;
+  }
+
+  async function loadProfiles() {
+    if (!activeUser) return;
+    const payload = await callApi("/api/profiles?user_id=" + encodeURIComponent(activeUser.id));
+    const select = $("profile-select");
+    select.innerHTML = payload.profiles.length
+      ? payload.profiles.map((p) => '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.label) + (p.has_resume ? " · resume uploaded" : "") + '</option>').join("")
+      : '<option value="">Create a profile first</option>';
+  }
+
+  $("btn-user").addEventListener("click", async () => {
+    try {
+      activeUser = await callApi("/api/users/session", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:$("user-email").value, display_name:$("display-name").value})});
+      localStorage.setItem("jobCopilotUser", JSON.stringify(activeUser));
+      say($("user-feedback"), "✅ Using workspace for " + activeUser.email, "ok");
+      await Promise.all([loadProfiles(), loadPipeline()]);
+    } catch (err) { say($("user-feedback"), "❌ " + err.message, "error"); }
+  });
+
+  $("btn-profile").addEventListener("click", async () => {
+    try {
+      const user_id = requireUser();
+      await callApi("/api/profiles", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id, label:$("profile-label").value, target_roles:$("profile-roles").value.split(","), locations_preferred:$("profile-locations").value.split(","), remote_preference:$("profile-remote").value, is_default:true})});
+      await loadProfiles(); say($("profile-feedback"), "✅ Profile saved in Lakebase.", "ok");
+    } catch (err) { say($("profile-feedback"), "❌ " + err.message, "error"); }
+  });
+
+  $("btn-resume").addEventListener("click", async () => {
+    try {
+      const user_id = requireUser(), profile = $("profile-select").value, file = $("resume-file").files[0];
+      if (!profile || !file) throw new Error("Select a profile and a .txt or .md resume.");
+      const form = new FormData(); form.append("resume", file);
+      await callApi("/api/profiles/" + encodeURIComponent(profile) + "/resume?user_id=" + encodeURIComponent(user_id), {method:"POST", body:form});
+      await loadProfiles(); say($("profile-feedback"), "✅ Resume text uploaded; its old embedding was cleared for refresh.", "ok");
+    } catch (err) { say($("profile-feedback"), "❌ " + err.message, "error"); }
+  });
+
+  document.addEventListener("click", async (event) => {
+    const save = event.target.closest(".save-job"), track = event.target.closest(".track-job");
+    if (!save && !track) return;
+    try {
+      const user_id = requireUser(), job_posting_id = (save || track).dataset.jobId;
+      const path = save ? "/api/saved-jobs" : "/api/applications";
+      const data = {user_id, job_posting_id};
+      if (!save && $("profile-select").value) data.profile_id = $("profile-select").value;
+      await callApi(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)});
+      await loadPipeline();
+    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
+  });
+
+  function renderPipeline(payload) {
+    $("pipeline-count").textContent = payload.application_count + " applications · " + payload.saved_count + " bookmarks";
+    $("pipeline-board").innerHTML = stages.map((stage) => {
+      const cards = (payload.stages[stage] || []).map((a) => '<div class="card"><strong>' + escapeHtml(a.title) + '</strong><small>' + escapeHtml(a.company || "Unknown company") + '</small><select class="stage-select" data-application-id="' + escapeHtml(a.id) + '">' + stages.map((s) => '<option value="' + s + '"' + (s === stage ? " selected" : "") + '>' + s + '</option>').join("") + '</select><button class="compact secondary add-note" data-application-id="' + escapeHtml(a.id) + '" style="margin-top:8px">+ Note</button></div>').join("");
+      return '<div class="lane"><h3>' + escapeHtml(stage) + ' · ' + (payload.stages[stage] || []).length + '</h3>' + (cards || '<small>No jobs</small>') + '</div>';
+    }).join("");
+  }
+
+  async function loadPipeline() {
+    if (!activeUser) return;
+    try { renderPipeline(await callApi("/api/pipeline?user_id=" + encodeURIComponent(activeUser.id))); }
+    catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
+  }
+
+  $("pipeline-board").addEventListener("change", async (event) => {
+    if (!event.target.matches(".stage-select")) return;
+    try {
+      await callApi("/api/applications/" + encodeURIComponent(event.target.dataset.applicationId) + "/stage", {method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id:requireUser(), stage:event.target.value})});
+      await loadPipeline(); say($("pipeline-feedback"), "✅ Stage updated in Lakebase.", "ok");
+    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
+  });
+
+  $("pipeline-board").addEventListener("click", async (event) => {
+    const button = event.target.closest(".add-note"); if (!button) return;
+    const note = prompt("Interview or follow-up note:"); if (!note) return;
+    try {
+      await callApi("/api/applications/" + encodeURIComponent(button.dataset.applicationId) + "/notes", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id:requireUser(), note, interview_type:"other"})});
+      await loadPipeline(); say($("pipeline-feedback"), "✅ Note added.", "ok");
+    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
+  });
+
   refreshStatus();
   loadPostings();
+  if (activeUser) {
+    $("user-email").value = activeUser.email || "";
+    $("display-name").value = activeUser.display_name || "";
+    say($("user-feedback"), "✅ Using workspace for " + activeUser.email, "ok");
+    loadProfiles(); loadPipeline();
+  }
 </script>
 </body>
 </html>
