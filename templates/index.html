@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Job Hunting Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:      #f7f5f0;
+    --panel:      #ffffff;
+    --ink:        #1c1a17;
+    --ink-soft:   #635c50;
+    --ink-faint:  #9b9284;
+    --rule:       #ddd6c8;
+    --accent:     #1f5c4a;
+    --accent-dim: #e4ede8;
+    --tag-adzuna:   #2f6f9e;
+    --tag-usajobs:  #7a3b8f;
+    --tag-remoteok: #1f5c4a;
+
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --display: "Fraunces", Georgia, serif;
+    --body: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+
+  .masthead { border-bottom: 1px solid var(--rule); background: var(--panel); }
+  .masthead-inner { max-width: 1100px; margin: 0 auto; padding: 24px 28px 18px; }
+  .wordmark { font-family: var(--display); font-weight: 600; font-size: 28px; letter-spacing: -0.01em; margin: 0; }
+  .wordmark span { color: var(--accent); font-style: italic; }
+  .tagline { color: var(--ink-soft); font-size: 14px; margin: 4px 0 0; max-width: 60ch; }
+
+  .statusline {
+    margin-top: 16px; padding: 9px 12px; border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: var(--accent-dim); font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em;
+    color: var(--ink-soft); text-transform: uppercase; overflow-x: auto; white-space: nowrap;
+  }
+  .statusline b { color: var(--ink); font-weight: 500; }
+  .statusline .sep { color: var(--ink-faint); padding: 0 10px; }
+  .statusline .warn { color: #9e4a1f; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 26px 28px 72px; display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; padding: 20px 18px 56px; } .masthead-inner { padding: 20px 18px 16px; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--rule); padding: 20px; }
+  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 3px; }
+  .panel h2 { font-family: var(--display); font-weight: 600; font-size: 19px; margin: 0 0 4px; }
+  .panel p.note { color: var(--ink-soft); font-size: 13px; margin: 0 0 16px; }
+
+  label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+  .field + .field { margin-top: 14px; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--rule); background: #fff; color: var(--ink);
+    font-family: var(--body); font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 84px; line-height: 1.5; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+
+  .checks { display: flex; gap: 16px; margin-top: 12px; font-size: 13px; color: var(--ink-soft); flex-wrap: wrap; }
+  .checks label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0; cursor: pointer; }
+  input[type="checkbox"] { accent-color: var(--accent); }
+
+  button { font-family: var(--body); font-size: 13.5px; font-weight: 600; padding: 10px 16px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; cursor: pointer; }
+  button:hover:not(:disabled) { background: #15473a; }
+  button:disabled { opacity: 0.5; cursor: progress; }
+  button.secondary { background: transparent; color: var(--accent); }
+  button.secondary:hover:not(:disabled) { background: var(--accent-dim); }
+  .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+  .feedback { margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--ink-faint); background: #faf9f5;
+    font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink-soft); white-space: pre-wrap; word-break: break-word; }
+  .feedback.ok { border-left-color: var(--accent); color: var(--ink); }
+  .feedback.error { border-left-color: #a1341f; color: #a1341f; }
+  .feedback:empty { display: none; }
+
+  .filters { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 16px; }
+  .filters .field { margin: 0; flex: 0 0 160px; }
+  .filters .checks { margin: 0 0 9px; }
+
+  .results-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 9px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+  .results-head h2 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0; }
+  .results-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-transform: uppercase; }
+
+  .posting { background: var(--panel); border: 1px solid var(--rule); padding: 15px 17px; margin-top: 11px; }
+  .posting-top { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+  .posting-meta { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+  .src-tag { padding: 2px 6px; border-radius: 2px; color: #fff; font-weight: 500; }
+  .src-tag.adzuna { background: var(--tag-adzuna); }
+  .src-tag.usajobs { background: var(--tag-usajobs); }
+  .src-tag.remoteok { background: var(--tag-remoteok); }
+  .posting h3 { font-family: var(--display); font-weight: 600; font-size: 16px; margin: 0; }
+  .posting h3 a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .posting h3 a:hover { border-color: var(--accent); }
+  .posting-body { margin: 8px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+  .posting-foot { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--rule); font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); }
+  .salary { flex: 0 0 auto; text-align: right; font-family: var(--mono); font-size: 13px; color: var(--accent); white-space: nowrap; }
+  .score { display: inline-block; margin-left: 7px; padding: 2px 6px; background: var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: 10.5px; font-weight: 600; }
+
+  .empty { border: 1px dashed var(--rule); padding: 32px 24px; text-align: center; color: var(--ink-soft); }
+  .empty strong { display: block; font-family: var(--display); font-weight: 600; font-size: 16px; color: var(--ink); margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <h1 class="wordmark">Job Hunting <span>Copilot</span></h1>
+    <p class="tagline">Sync live postings, embed them with Databricks GTE, and retrieve configurable top-K semantic matches from Lakebase.</p>
+    <div class="statusline" id="statusline" aria-live="polite">Reading pipeline status&hellip;</div>
+  </div>
+</header>
+
+<main class="layout">
+  <div>
+    <section class="panel">
+      <p class="eyebrow">Step 1</p>
+      <h2>Sync postings</h2>
+      <p class="note">Searches every keyword against each configured source and upserts normalized postings into <code>job_postings</code>.</p>
+
+      <div class="field">
+        <label for="keywords">Search keywords</label>
+        <textarea id="keywords" rows="4" placeholder="software engineer&#10;data engineer">software engineer
+data engineer
+machine learning engineer</textarea>
+      </div>
+
+      <div class="field">
+        <label for="location">Location (optional)</label>
+        <input type="text" id="location" placeholder="Austin, TX">
+      </div>
+
+      <div class="field">
+        <label for="limit">Postings per source, per keyword</label>
+        <input type="number" id="limit" value="25" min="1" max="200">
+      </div>
+
+      <div class="actions">
+        <button id="btn-sync">Sync postings</button>
+      </div>
+      <div class="feedback" id="sync-feedback" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" style="margin-top: 18px;">
+      <p class="eyebrow">Step 2</p>
+      <h2>Embed postings</h2>
+      <p class="note">Embeds only new or content-changed postings. The notebook is the recommended batch path; this button is useful for a small App smoke test.</p>
+      <div class="field">
+        <label for="embed-limit">Maximum postings</label>
+        <input type="number" id="embed-limit" value="50" min="1" max="500">
+      </div>
+      <div class="actions"><button id="btn-embed">Embed pending</button></div>
+      <div class="feedback" id="embed-feedback" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <div>
+    <section class="panel" style="margin-bottom: 18px;">
+      <p class="eyebrow">Browse</p>
+      <h2>Synced postings</h2>
+      <p class="note">Everything currently in Lakebase, newest first.</p>
+
+      <div class="field">
+        <label for="semantic-query">Natural-language job search</label>
+        <textarea id="semantic-query" rows="3" placeholder="senior data engineer with Databricks, Python, SQL, and AWS"></textarea>
+      </div>
+      <div class="filters">
+        <div class="field"><label for="top-k">Top K</label><input type="number" id="top-k" value="5" min="1" max="25"></div>
+        <div class="field"><label for="semantic-location">Location contains</label><input type="text" id="semantic-location" placeholder="New York"></div>
+        <div class="field"><label for="semantic-salary">Minimum salary</label><input type="number" id="semantic-salary" min="0" placeholder="100000"></div>
+        <div class="checks"><label><input type="checkbox" id="semantic-remote"> Remote only</label></div>
+      </div>
+      <div class="actions"><button id="btn-semantic">Semantic search</button></div>
+      <div class="feedback" id="search-feedback" aria-live="polite"></div>
+
+      <div class="filters">
+        <div class="field">
+          <label for="filter-source">Source</label>
+          <select id="filter-source">
+            <option value="">All</option>
+            <option value="adzuna">Adzuna</option>
+            <option value="usajobs">USAJobs</option>
+            <option value="remoteok">RemoteOK</option>
+          </select>
+        </div>
+        <div class="checks">
+          <label><input type="checkbox" id="filter-remote"> Remote only</label>
+        </div>
+        <button class="secondary" id="btn-refresh" type="button">Refresh</button>
+      </div>
+    </section>
+
+    <div class="results-head">
+      <h2>Postings</h2>
+      <span class="count" id="results-count"></span>
+    </div>
+    <div id="results">
+      <div class="empty">
+        <strong>Nothing synced yet</strong>
+        <p>Sync a few keywords to pull postings into Lakebase.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  function say(node, message, kind) {
+    node.textContent = message;
+    node.className = "feedback" + (kind ? " " + kind : "");
+  }
+
+  async function callApi(path, options) {
+    const response = await fetch(path, options);
+    let payload;
+    try { payload = await response.json(); }
+    catch (err) { throw new Error("Unreadable response (HTTP " + response.status + ")."); }
+    if (!response.ok) throw new Error(payload.error || "Request failed (HTTP " + response.status + ").");
+    return payload;
+  }
+
+  async function refreshStatus() {
+    const line = $("statusline");
+    try {
+      const h = await callApi("/healthz");
+      const stats = await callApi("/jobs/stats");
+      let embeddings = null;
+      try { embeddings = await callApi("/jobs/embeddings/status"); } catch (ignored) {}
+      const srcs = h.sources_configured || {};
+      const srcLabel = (name, on) => (on ? "<b>" + name + "</b>" : '<span class="warn">' + name + " off</span>");
+      line.innerHTML =
+        "Lakebase" +
+        '<span class="sep">/</span>postings <b>' + String(stats.total_postings || 0).padStart(4, "0") + "</b>" +
+        '<span class="sep">/</span>sources ' + [srcLabel("adzuna", srcs.adzuna), srcLabel("usajobs", srcs.usajobs), srcLabel("remoteok", srcs.remoteok)].join(", ") +
+        (embeddings ? '<span class="sep">/</span>embedded <b>' + embeddings.embedded_postings + '</b> of ' + embeddings.total_postings : '');
+    } catch (err) {
+      line.innerHTML = "Lakebase unreachable &mdash; " + escapeHtml(err.message);
+    }
+  }
+
+  $("btn-sync").addEventListener("click", async () => {
+    const button = $("btn-sync");
+    const feedback = $("sync-feedback");
+    const keywords = $("keywords").value.split(/[\n;]+/).map((s) => s.trim()).filter(Boolean);
+    if (!keywords.length) { say(feedback, "Add at least one keyword, one per line.", "error"); return; }
+
+    const location = $("location").value.trim();
+    button.disabled = true;
+    say(feedback, "Contacting Adzuna, USAJobs, and RemoteOK\u2026");
+
+    try {
+      const result = await callApi("/jobs/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          queries: keywords.map((keyword) => ({ keyword, location })),
+          limit_per_source: Number($("limit").value) || 25
+        })
+      });
+      const bySource = Object.entries(result.by_source || {}).map(([s, n]) => s + ": " + n).join(", ") || "none";
+      let message = "Synced " + result.synced + " postings (" + bySource + ").";
+      if (result.errors && result.errors.length) {
+        message += "\n" + result.errors.map((e) => e.source + " \u2014 " + e.error).join("\n");
+      }
+      say(feedback, message, "ok");
+      refreshStatus();
+      loadPostings();
+    } catch (err) {
+      say(feedback, err.message, "error");
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  function renderPostings(payload) {
+    const container = $("results");
+    const postings = payload.postings || [];
+    $("results-count").textContent = postings.length ? postings.length + " shown" : "";
+
+    if (!postings.length) {
+      container.innerHTML = '<div class="empty"><strong>No postings match</strong><p>Try syncing more keywords or clearing filters.</p></div>';
+      return;
+    }
+
+    container.innerHTML = postings.map((p) => {
+      const salaryParts = [];
+      if (p.salary_min) salaryParts.push("$" + Math.round(p.salary_min).toLocaleString());
+      if (p.salary_max && p.salary_max !== p.salary_min) salaryParts.push("$" + Math.round(p.salary_max).toLocaleString());
+      const salary = salaryParts.length ? salaryParts.join(" \u2013 ") : "";
+
+      const foot = [];
+      if (p.employment_type) foot.push(escapeHtml(p.employment_type));
+      if (p.posted_at) foot.push("posted " + new Date(p.posted_at).toLocaleDateString());
+      foot.push("synced " + new Date(p.synced_at).toLocaleDateString());
+
+      return '<article class="posting">' +
+        '<div class="posting-top"><div>' +
+        '<p class="posting-meta"><span class="src-tag ' + escapeHtml(p.source) + '">' + escapeHtml(p.source) + '</span> &middot; ' +
+        escapeHtml(p.company || "Unknown company") + (p.remote ? " &middot; Remote" : (p.location ? " &middot; " + escapeHtml(p.location) : "")) + '</p>' +
+        '<h3>' + (p.apply_url ? '<a href="' + escapeHtml(p.apply_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.title) + '</a>' : escapeHtml(p.title)) +
+        (p.similarity != null ? '<span class="score">' + (Number(p.similarity) * 100).toFixed(1) + '% match</span>' : '') + '</h3>' +
+        '</div>' + (salary ? '<div class="salary">' + salary + '</div>' : '') + '</div>' +
+        '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '\u2026' : '') + '</p>' +
+        '<p class="posting-foot">' + foot.join(" &middot; ") + '</p>' +
+        '</article>';
+    }).join("");
+  }
+
+  async function loadPostings() {
+    const params = new URLSearchParams();
+    const source = $("filter-source").value;
+    if (source) params.set("source", source);
+    if ($("filter-remote").checked) params.set("remote_only", "true");
+    params.set("limit", "50");
+    try {
+      const payload = await callApi("/jobs?" + params.toString());
+      renderPostings(payload);
+    } catch (err) {
+      $("results").innerHTML = '<div class="empty"><strong>Could not load postings</strong><p>' + escapeHtml(err.message) + '</p></div>';
+    }
+  }
+
+  $("btn-refresh").addEventListener("click", loadPostings);
+  $("filter-source").addEventListener("change", loadPostings);
+  $("filter-remote").addEventListener("change", loadPostings);
+
+  $("btn-embed").addEventListener("click", async () => {
+    const button = $("btn-embed"), feedback = $("embed-feedback");
+    button.disabled = true;
+    say(feedback, "Calling the hosted embedding endpoint…");
+    try {
+      const result = await callApi("/jobs/embed", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({limit: Number($("embed-limit").value) || 50, batch_size: 8})
+      });
+      say(feedback, "Embedded " + result.embedded_postings + " postings and wrote " + result.written_chunks + " chunks.", "ok");
+      refreshStatus();
+    } catch (err) { say(feedback, err.message, "error"); }
+    finally { button.disabled = false; }
+  });
+
+  $("btn-semantic").addEventListener("click", async () => {
+    const button = $("btn-semantic"), feedback = $("search-feedback");
+    const text = $("semantic-query").value.trim();
+    if (!text) { say(feedback, "Describe the kind of job you want.", "error"); return; }
+    button.disabled = true;
+    say(feedback, "Embedding your query and searching Lakebase…");
+    try {
+      const source = $("filter-source").value;
+      const payload = await callApi("/jobs/search", {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          query: text, top_k: Number($("top-k").value) || 5,
+          sources: source ? [source] : [],
+          remote_only: $("semantic-remote").checked,
+          location: $("semantic-location").value.trim(),
+          minimum_salary: $("semantic-salary").value ? Number($("semantic-salary").value) : null
+        })
+      });
+      renderPostings(payload);
+      say(feedback, "Returned " + payload.postings.length + " semantic matches.", "ok");
+    } catch (err) { say(feedback, err.message, "error"); }
+    finally { button.disabled = false; }
+  });
+
+  refreshStatus();
+  loadPostings();
+</script>
+</body>
+</html>
