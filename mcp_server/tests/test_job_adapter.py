@@ -12,6 +12,14 @@ fake_embedding = types.ModuleType("embedding_client")
 fake_embedding.embed_query = lambda text: "[0]"
 sys.modules["embedding_client"] = fake_embedding
 
+fake_model = types.ModuleType("model_client")
+fake_model.generate = lambda *args, **kwargs: "Grounded draft"
+sys.modules["model_client"] = fake_model
+
+fake_requests = types.ModuleType("requests")
+fake_requests.get = lambda *args, **kwargs: None
+sys.modules["requests"] = fake_requests
+
 import job_adapter
 
 
@@ -33,6 +41,11 @@ class AdapterValidationTests(unittest.TestCase):
         with patch.object(job_adapter.lakebase, "query", return_value=[]):
             with self.assertRaisesRegex(ValueError, "No user exists"):
                 job_adapter.user_by_email("missing@example.com")
+
+    def test_invalid_feedback_is_clean_validation_error(self):
+        with patch.object(job_adapter, "user_by_email", return_value={"id": "u"}):
+            with self.assertRaisesRegex(ValueError, "good, bad, or skip"):
+                job_adapter.record_feedback("user@example.com", "job:1", "maybe")
 
 
 if __name__ == "__main__":

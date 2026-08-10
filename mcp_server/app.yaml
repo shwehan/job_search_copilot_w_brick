@@ -14,4 +14,5 @@ env:
     value: "lakebase-url"
   - name: DATABRICKS_EMBEDDING_MODEL
     value: "databricks-gte-large-en"
-
+  - name: DATABRICKS_CHAT_MODEL
+    value: "databricks-claude-sonnet-4-5"

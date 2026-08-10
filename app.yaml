@@ -46,3 +46,8 @@ env:
     value: "150"
   - name: JOB_EMBEDDING_BATCH_SIZE
     value: "8"
+
+  # After exporting the Playground agent to a Databricks App, paste its URL
+  # here and redeploy to enable the dashboard's Ask Copilot button.
+  - name: AGENT_APP_URL
+    value: ""

@@ -9,8 +9,19 @@ from typing import Any
 import config
 import lakebase
 from embedding_client import embed_query
+from model_client import generate
+
+import ipaddress
+import socket
+from urllib.parse import urlparse
+
+import requests
 
 STAGES = ("saved", "applied", "interviewing", "rejected", "offer")
+SKILLS = ("python", "sql", "pyspark", "spark", "databricks", "delta lake",
+          "airflow", "dbt", "aws", "azure", "gcp", "kafka", "docker",
+          "kubernetes", "terraform", "java", "javascript", "react",
+          "machine learning", "tableau", "power bi", "snowflake")
 
 
 def _json(value: Any) -> Any:
@@ -88,6 +99,24 @@ def search_jobs(user_email: str, request: str, top_k: int = 5,
     """
     query_params = tuple([vector] + params + [vector, max(50, limit * 10), limit])
     results = [_row(item) for item in lakebase.query(sql, query_params)]
+    if results:
+        job_ids = [item["id"] for item in results]
+        placeholders = ",".join(["%s"] * len(job_ids))
+        feedback_rows = lakebase.query(
+            f"""SELECT job_posting_id, feedback FROM job_feedback
+                WHERE user_id=%s AND job_posting_id IN ({placeholders})""",
+            tuple([context["user"]["id"]] + job_ids),
+        )
+        feedback_by_job = {str(row["job_posting_id"]): row["feedback"] for row in feedback_rows}
+        adjustments = {"good": 0.05, "bad": -0.10, "skip": -0.04}
+        for item in results:
+            value = feedback_by_job.get(str(item["id"]))
+            item["base_similarity"] = item.get("similarity")
+            item["feedback"] = value
+            item["feedback_adjustment"] = adjustments.get(value, 0.0)
+            item["similarity"] = max(0.0, min(1.0,
+                float(item.get("similarity") or 0) + item["feedback_adjustment"]))
+        results.sort(key=lambda item: item["similarity"], reverse=True)
     return {"query": clean, "profile_label": profile["label"], "count": len(results), "jobs": results}
 
 
@@ -190,3 +219,87 @@ def stale_applications(user_email: str, stale_days: int = 14) -> dict:
            ORDER BY a.stage_updated_at""", (user["id"], days)
     )
     return {"threshold_days": days, "count": len(rows), "applications": [_row(item) for item in rows]}
+
+
+def record_feedback(user_email: str, job_posting_id: str, feedback: str,
+                    reason: str = "") -> dict:
+    user = user_by_email(user_email)
+    value = _text(feedback, "feedback").lower()
+    if value not in ("good", "bad", "skip"):
+        raise ValueError("feedback must be good, bad, or skip.")
+    row = lakebase.write_returning(
+        """INSERT INTO job_feedback (user_id,job_posting_id,feedback,reason)
+           VALUES (%s,%s,%s,%s) ON CONFLICT (user_id,job_posting_id) DO UPDATE
+           SET feedback=EXCLUDED.feedback,reason=EXCLUDED.reason,updated_at=now()
+           RETURNING id,job_posting_id,feedback,reason,updated_at""",
+        (user["id"], _text(job_posting_id, "job_posting_id", maximum=500), value,
+         _text(reason, "reason", required=False, maximum=2000)),
+    )
+    return _row(row)
+
+
+def check_listing_legitimacy(job_posting_id: str) -> dict:
+    rows = lakebase.query(
+        "SELECT id,title,company,description_text,apply_url,source FROM job_postings WHERE id=%s",
+        (_text(job_posting_id, "job_posting_id", maximum=500),),
+    )
+    if not rows: raise ValueError("Job posting not found.")
+    job = rows[0]; text = (job.get("description_text") or "").lower(); flags=[]
+    suspicious = {"upfront payment":"payment", "gift card":"gift card",
+                  "wire transfer":"wire transfer", "telegram":"telegram",
+                  "whatsapp":"whatsapp", "crypto payment":"crypto payment",
+                  "equipment check":"equipment check"}
+    for label, token in suspicious.items():
+        if token in text: flags.append(label)
+    url = job.get("apply_url") or ""; http_status=None; url_live=False
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        flags.append("missing or invalid application URL")
+    else:
+        try:
+            address = ipaddress.ip_address(socket.gethostbyname(parsed.hostname))
+            if address.is_private or address.is_loopback or address.is_link_local:
+                flags.append("application URL resolves to a private address")
+            else:
+                response = requests.get(url, timeout=6, allow_redirects=False,
+                                        headers={"User-Agent":"JobCopilot/1.0"}, stream=True)
+                http_status=response.status_code; url_live=response.status_code < 400
+                response.close()
+                if not url_live: flags.append(f"application URL returned HTTP {http_status}")
+        except Exception:
+            flags.append("application URL could not be verified")
+    score=max(0,100-len(flags)*20)
+    verdict="low_risk" if score>=80 else "review" if score>=50 else "high_risk"
+    return {"job_posting_id":job["id"],"title":job["title"],"company":job.get("company"),
+            "source":job["source"],"url_live":url_live,"http_status":http_status,
+            "risk_score":score,"verdict":verdict,"flags":flags,
+            "notice":"Heuristic screening only; verify the employer independently."}
+
+
+def skill_gap_report(user_email: str, job_posting_ids: list[str]) -> dict:
+    context=get_profile_context(user_email); ids=[str(x) for x in (job_posting_ids or [])][:10]
+    if not ids: raise ValueError("Provide at least one job_posting_id from search_jobs.")
+    placeholders=",".join(["%s"]*len(ids))
+    jobs=lakebase.query(f"SELECT id,title,description_text FROM job_postings WHERE id IN ({placeholders})",tuple(ids))
+    resume=(context["profile"].get("resume_text") or "").lower()
+    counts={skill:sum(1 for job in jobs if skill in (job.get("description_text") or "").lower()) for skill in SKILLS}
+    ranked=[{"skill":skill,"jobs_mentioning":count,"present_in_resume":skill in resume}
+            for skill,count in counts.items() if count]
+    ranked.sort(key=lambda x:(x["present_in_resume"],-x["jobs_mentioning"],x["skill"]))
+    return {"profile_label":context["profile"]["label"],"jobs_analyzed":len(jobs),
+            "missing_skills":[x for x in ranked if not x["present_in_resume"]],
+            "present_skills":[x for x in ranked if x["present_in_resume"]]}
+
+
+def draft_application_snippet(user_email: str, job_posting_id: str,
+                              format: str = "cover_letter") -> dict:
+    if format not in ("cover_letter", "resume_bullet"):
+        raise ValueError("format must be cover_letter or resume_bullet.")
+    context=get_job_match_context(user_email,job_posting_id)
+    profile=context["profile"]; job=context["job"]
+    prompt=f"""FORMAT: {format}\nJOB TITLE: {job['title']}\nCOMPANY: {job.get('company')}\n
+JOB TEXT:\n{job.get('description_text','')[:6000]}\nRESUME:\n{profile.get('resume_text','')[:6000]}"""
+    text=generate(
+        "Write a concise application snippet using only facts explicitly present in the resume and job text. Never invent metrics, employers, credentials, or experience. For cover_letter use 90-130 words; for resume_bullet produce one bullet.",
+        prompt, 300)
+    return {"job_posting_id":job_posting_id,"format":format,"model":config.CHAT_MODEL,"snippet":text}

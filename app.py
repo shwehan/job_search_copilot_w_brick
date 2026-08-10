@@ -128,7 +128,7 @@ def _build_job_search_client() -> JobSearchClient:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", agent_app_url=os.getenv("AGENT_APP_URL", "").strip())
 
 
 @app.route("/healthz")
@@ -423,6 +423,8 @@ def jobs_semantic_search():
             minimum_salary=minimum_salary,
             location=location,
         )
+        if user_id and lakebase.table_exists(config.JOB_FEEDBACK_TABLE):
+            rows = workflow_service.apply_feedback_reranking(user_id, rows)
     except (TypeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
     return jsonify({"query": search_text, "profile": profile.get("label") if profile else None,
@@ -522,6 +524,14 @@ def interview_notes_create(application_id):
 def contacts_create():
     body = _json_body()
     return jsonify(workflow_service.add_contact(_user_id(body), body)), 201
+
+
+@app.route("/api/feedback", methods=["POST"])
+def feedback_create():
+    body = _json_body()
+    return jsonify(workflow_service.record_feedback(
+        _user_id(body), body.get("job_posting_id"), body.get("feedback"), body.get("reason")
+    )), 201
 
 
 if __name__ == "__main__":

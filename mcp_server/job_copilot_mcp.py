@@ -152,6 +152,67 @@ def check_stale_applications(user_email: str, stale_days: int = 14) -> dict:
                  user_email, stale_days)
 
 
+@mcp.tool
+def record_feedback(user_email: str, job_posting_id: str, feedback: str,
+                    reason: str = "") -> dict:
+    """Store an explicit preference that influences the user's future ranking.
+
+    Args:
+        user_email: Email of a user already created in the dashboard.
+        job_posting_id: Stable ID returned by search_jobs.
+        feedback: One of good, bad, or skip.
+        reason: Optional explanation supplied by the user.
+    Returns:
+        The persisted feedback row. Never infer feedback without user confirmation.
+    """
+    return _safe("record_feedback", job_adapter.record_feedback, user_email,
+                 job_posting_id, feedback, reason)
+
+
+@mcp.tool
+def check_listing_legitimacy(job_posting_id: str) -> dict:
+    """Screen a stored listing for common risk signals and URL availability.
+
+    Args:
+        job_posting_id: Stable ID returned by search_jobs.
+    Returns:
+        A heuristic risk score, verdict, and evidence flags. This is not a
+        guarantee that an employer or posting is legitimate.
+    """
+    return _safe("check_listing_legitimacy", job_adapter.check_listing_legitimacy,
+                 job_posting_id)
+
+
+@mcp.tool
+def get_skill_gap_report(user_email: str, job_posting_ids: list[str]) -> dict:
+    """Compare resume evidence with recurring skills in selected real postings.
+
+    Args:
+        user_email: Email of a user already created in the dashboard.
+        job_posting_ids: One to ten stable IDs returned by search_jobs.
+    Returns:
+        Skills found in the job texts, divided into present and missing groups.
+    """
+    return _safe("get_skill_gap_report", job_adapter.skill_gap_report,
+                 user_email, job_posting_ids)
+
+
+@mcp.tool
+def draft_application_snippet(user_email: str, job_posting_id: str,
+                              format: str = "cover_letter") -> dict:
+    """Draft grounded application text from a stored resume and job description.
+
+    Args:
+        user_email: Email of a user already created in the dashboard.
+        job_posting_id: Stable ID returned by search_jobs.
+        format: cover_letter for a short paragraph or resume_bullet for one bullet.
+    Returns:
+        Model-generated text constrained to facts in the resume and posting.
+    """
+    return _safe("draft_application_snippet", job_adapter.draft_application_snippet,
+                 user_email, job_posting_id, format)
+
+
 def main():
     port = int(os.getenv("DATABRICKS_APP_PORT", os.getenv("PORT", "8000")))
     mcp.run(transport="http", host="0.0.0.0", port=port)
@@ -159,4 +220,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

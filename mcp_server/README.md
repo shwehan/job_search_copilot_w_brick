@@ -8,11 +8,15 @@ The App service principal needs:
 
 - READ on secret scope `database`, key `lakebase-url`.
 - CAN QUERY on the configured `databricks-gte-large-en` endpoint.
+- CAN QUERY on the configured `databricks-claude-sonnet-4-5` chat endpoint
+  (or the endpoint selected with `DATABRICKS_CHAT_MODEL`).
 - Network access to the same Lakebase instance used by the dashboard.
 
 The server exposes `health`, `get_profile`, `search_jobs`,
 `get_job_match_context`, `save_job`, `update_pipeline_stage`,
-`log_interview_note`, `get_pipeline`, and `check_stale_applications`.
+`log_interview_note`, `get_pipeline`, `check_stale_applications`,
+`record_feedback`, `check_listing_legitimacy`, `get_skill_gap_report`, and
+`draft_application_snippet`.
 
 This capstone uses an explicit `user_email` tool argument because Phase 3 has a
 development identity selector rather than production authentication. The MCP

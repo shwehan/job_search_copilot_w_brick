@@ -253,3 +253,41 @@ def add_contact(user_id: str, data: dict) -> dict:
          _clean(data.get("linkedin_url"), "linkedin_url", maximum=2000),
          _clean(data.get("notes"), "notes", maximum=5000)),
     )
+
+
+def record_feedback(user_id: str, job_posting_id: str, feedback: str,
+                    reason: str | None = None) -> dict:
+    feedback = str(feedback or "").lower().strip()
+    if feedback not in ("good", "bad", "skip"):
+        raise ValueError("feedback must be good, bad, or skip.")
+    return _write_returning(
+        f"""INSERT INTO {config.JOB_FEEDBACK_TABLE}
+                (user_id, job_posting_id, feedback, reason)
+            VALUES (%s,%s,%s,%s)
+            ON CONFLICT (user_id, job_posting_id) DO UPDATE SET
+                feedback=EXCLUDED.feedback, reason=EXCLUDED.reason, updated_at=now()
+            RETURNING id, user_id, job_posting_id, feedback, reason, updated_at""",
+        (user_id, _clean(job_posting_id, "job_posting_id", required=True, maximum=500),
+         feedback, _clean(reason, "reason", maximum=2000)),
+    )
+
+
+def apply_feedback_reranking(user_id: str, rows: list[dict]) -> list[dict]:
+    if not rows:
+        return rows
+    placeholders = ",".join(["%s"] * len(rows))
+    feedback_rows = lakebase.run_query(
+        f"""SELECT job_posting_id, feedback FROM {config.JOB_FEEDBACK_TABLE}
+            WHERE user_id=%s AND job_posting_id IN ({placeholders})""",
+        tuple([user_id] + [row["id"] for row in rows]),
+    )
+    signals = {row["job_posting_id"]: row["feedback"] for row in feedback_rows}
+    adjustments = {"good": 0.05, "bad": -0.10, "skip": -0.04}
+    for row in rows:
+        signal = signals.get(row["id"])
+        row["base_similarity"] = row.get("similarity")
+        row["feedback"] = signal
+        row["feedback_adjustment"] = adjustments.get(signal, 0.0)
+        row["similarity"] = round(max(-1.0, min(1.0,
+            float(row.get("similarity") or 0) + row["feedback_adjustment"])), 6)
+    return sorted(rows, key=lambda item: item["similarity"], reverse=True)

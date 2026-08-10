@@ -1,4 +1,4 @@
-# Phase 5 demonstration evidence
+# Phase 5–6 demonstration evidence
 
 Do not invent outputs in this file. After deploying the MCP App and Agent
 Bricks agent, capture the real tool trace and final response for each test.
@@ -54,3 +54,16 @@ Prompt:
 
 Expected behavior: the agent asks for the email and does not call a write tool.
 
+## Phase 6 run — analysis, risk, preference, and drafting
+
+Prompt:
+
+> For `<your-email>`, find five data engineering roles and report recurring
+> skill gaps. Check the strongest result for risk signals. The first result is
+> a good fit—remember that, then draft a short cover-letter snippet.
+
+Expected trace: `get_profile` → `search_jobs` → `get_skill_gap_report` →
+`check_listing_legitimacy` → confirmation/explicit preference →
+`record_feedback` → `draft_application_snippet`.
+
+Capture the trace, final response, and the matching `job_feedback` row.

@@ -11,8 +11,11 @@
     "update_pipeline_stage",
     "log_interview_note",
     "get_pipeline",
-    "check_stale_applications"
+    "check_stale_applications",
+    "record_feedback",
+    "check_listing_legitimacy",
+    "get_skill_gap_report",
+    "draft_application_snippet"
   ],
   "system_prompt_file": "system_prompt.md"
 }
-
