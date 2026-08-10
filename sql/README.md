@@ -1,4 +1,4 @@
-# Lakebase schema — Phase 1
+# Lakebase schema — Phases 1 and 2
 
 Run these against your Lakebase Postgres database, **in order**, before running anything else.
 Any Postgres client works: the Databricks SQL editor pointed at the Lakebase instance, `psql`, or
@@ -20,6 +20,7 @@ a notebook cell using `lakebase.connection_parts()`.
 | `12_create_job_posting_embeddings.sql` | `job_posting_embeddings` (chunked, `VECTOR(1024)`, HNSW index) |
 | `13_add_profile_resume_embedding.sql` | Adds `resume_embedding`/`resume_content_hash`/`resume_embedded_at` to `profiles` |
 | `14_verify_phase2_schema.sql` | (inspection only) |
+| `15_verify_phase2_pipeline.sql` | Verifies embedded rows, model coverage, changed postings, and cosine index |
 
 Order matters: `04` must run before `05` (skill joins reference `job_postings`), and `02`/`04` must
 run before `06` (`applications` references both `profiles` and `job_postings`). `04` must also run
@@ -40,13 +41,11 @@ stage machine (`saved → applied → interviewing → rejected/offer`); its own
 "I've deliberately decided to track this one," a heavier single-item action. A posting can live in
 `saved_jobs` forever without ever entering `applications` at all.
 
-## What's deferred to Phase 2
+## Phase 2 vector design
 
-No vector columns anywhere yet. `profiles.resume_text` and `job_postings.description_text` stay
-plain `TEXT` until the embedding layer exists — adding `VECTOR(N)` columns now would mean guessing
-the model's dimension before it's chosen. `content_hash` on `job_postings` is already in place so
-Phase 2's re-embed-only-what-changed logic (same pattern as the weather-app homework) has something
-to compare against from day one.
+SQL `11–13` add pgvector, chunk-level `VECTOR(1024)` job embeddings, a cosine HNSW index, and a
+single profile-resume vector. `content_hash` is copied to each chunk, allowing the notebook to skip
+unchanged postings and atomically replace only the chunks for changed postings.
 
 ## CDF: confirmed unavailable on Free Edition
 
