@@ -1,4 +1,4 @@
-# AI Job Hunting Copilot — Phases 1–5
+# AI Job Hunting Copilot
 
 Harvests live job postings from three sources — Adzuna, USAJobs, and RemoteOK — normalizes them
 to one schema, and stores them in Lakebase (Databricks-managed Postgres).
@@ -7,8 +7,7 @@ Phase 1 provides ingestion and Lakebase storage. Phase 2 adds chunked, hosted GT
 configurable top-K pgvector retrieval. Phase 3 adds profiles, resume upload, bookmarks, and a
 persistent application pipeline. Phase 4 adds the required Spark data pipeline and scheduled
 incremental refresh. Phase 5 adds a separate FastMCP Databricks App and a guarded Agent Bricks
-configuration with tools that both retrieve and write. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md)
-for the remaining differentiators and final polish roadmap.
+configuration with tools that both retrieve and write. 
 
 ---
 
