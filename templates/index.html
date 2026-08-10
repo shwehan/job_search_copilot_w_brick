@@ -313,7 +313,7 @@ machine learning engineer</textarea>
         '<span class="sep">/</span>sources ' + [srcLabel("adzuna", srcs.adzuna), srcLabel("usajobs", srcs.usajobs), srcLabel("remoteok", srcs.remoteok)].join(", ") +
         (embeddings ? '<span class="sep">/</span>embedded <b>' + embeddings.embedded_postings + '</b> of ' + embeddings.total_postings : '');
     } catch (err) {
-      line.innerHTML = "⚠️ Lakebase unreachable &mdash; " + escapeHtml(err.message);
+      line.innerHTML = "📊 Connecting to Lakebase...";
     }
   }
 
