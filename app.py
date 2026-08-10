@@ -387,18 +387,46 @@ def jobs_semantic_search():
         return jsonify({"error": "Provide a non-empty query."}), 400
     if len(search_text) > 2000:
         return jsonify({"error": "Query must be 2,000 characters or fewer."}), 400
+    profile_id = str(body.get("profile_id") or "").strip()
+    user_id = str(body.get("user_id") or "").strip()
+    profile = None
+    if profile_id and user_id:
+        matches = lakebase.run_query(
+            f"""SELECT id, label, target_roles, remote_preference,
+                       locations_preferred, salary_min
+                FROM {config.PROFILES_TABLE}
+                WHERE id=%s AND user_id=%s""", (profile_id, user_id)
+        )
+        if not matches:
+            return jsonify({"error": "Selected profile does not belong to this workspace."}), 400
+        profile = matches[0]
+    contextual_query = search_text
+    if profile and profile.get("target_roles"):
+        contextual_query += ". Target roles: " + ", ".join(profile["target_roles"])
+    remote_only = bool(body.get("remote_only", False))
+    if profile and profile.get("remote_preference") == "remote_only":
+        remote_only = True
+    minimum_salary = body.get("minimum_salary")
+    if minimum_salary is None and profile:
+        minimum_salary = profile.get("salary_min")
+    location = body.get("location")
+    if not location and profile and len(profile.get("locations_preferred") or []) == 1:
+        preferred = profile["locations_preferred"][0]
+        if preferred.lower() != "remote":
+            location = preferred
     try:
         rows = job_embeddings.semantic_search(
-            search_text,
+            contextual_query,
             body.get("top_k", 5),
             sources=body.get("sources") or [],
-            remote_only=bool(body.get("remote_only", False)),
-            minimum_salary=body.get("minimum_salary"),
-            location=body.get("location"),
+            remote_only=remote_only,
+            minimum_salary=minimum_salary,
+            location=location,
         )
     except (TypeError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify({"query": search_text, "top_k": len(rows), "postings": rows})
+    return jsonify({"query": search_text, "profile": profile.get("label") if profile else None,
+                    "top_k": len(rows), "postings": rows})
 
 
 # ---------------------------------------------------------------------------

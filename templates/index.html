@@ -1,548 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>🎯 AI Job Hunting Copilot</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Job Hunting Copilot</title>
 <style>
-  :root {
-    --paper:      #f5f7fa;
-    --panel:      #ffffff;
-    --ink:        #1a202c;
-    --ink-soft:   #4a5568;
-    --ink-faint:  #a0aec0;
-    --rule:       #e2e8f0;
-    --accent:     #0d9488;
-    --accent-hover: #0f766e;
-    --accent-dim: #ccfbf1;
-    --tag-adzuna:   #3b82f6;
-    --tag-usajobs:  #8b5cf6;
-    --tag-remoteok: #10b981;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-    --mono: "IBM Plex Mono", ui-monospace, monospace;
-    --display: "Fraunces", Georgia, serif;
-    --body: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
-
-  .masthead { border-bottom: 1px solid var(--rule); background: linear-gradient(135deg, var(--panel) 0%, #fafbfc 100%); box-shadow: var(--shadow-sm); }
-  .masthead-inner { max-width: 1100px; margin: 0 auto; padding: 28px 28px 22px; }
-  .wordmark { font-family: var(--display); font-weight: 600; font-size: 32px; letter-spacing: -0.01em; margin: 0; background: linear-gradient(135deg, var(--ink) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .wordmark span { color: var(--accent); font-style: italic; }
-  .tagline { color: var(--ink-soft); font-size: 14px; margin: 6px 0 0; max-width: 60ch; line-height: 1.6; }
-
-  .statusline {
-    margin-top: 18px; padding: 12px 16px; border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px;
-    background: var(--accent-dim); font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em;
-    color: var(--ink-soft); text-transform: uppercase; overflow-x: auto; white-space: nowrap; box-shadow: var(--shadow-sm);
-  }
-  .statusline b { color: var(--ink); font-weight: 600; }
-  .statusline .sep { color: var(--ink-faint); padding: 0 10px; }
-  .statusline .warn { color: #dc2626; font-weight: 600; }
-
-  .layout { max-width: 1100px; margin: 0 auto; padding: 32px 28px 72px; display: grid; grid-template-columns: 360px 1fr; gap: 28px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; padding: 24px 18px 56px; } .masthead-inner { padding: 24px 18px 20px; } }
-
-  .panel { background: var(--panel); border: 1px solid var(--rule); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-  .panel:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-  .eyebrow { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
-  .eyebrow::before { content: ''; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; }
-  .panel h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0 0 8px; color: var(--ink); }
-  .panel p.note { color: var(--ink-soft); font-size: 13px; margin: 0 0 20px; line-height: 1.6; }
-
-  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; color: var(--ink); }
-  .field + .field { margin-top: 16px; }
-  input[type="text"], input[type="number"], textarea, select {
-    width: 100%; padding: 11px 14px; border: 1px solid var(--rule); background: #fff; color: var(--ink);
-    font-family: var(--body); font-size: 14px; border-radius: 8px; transition: all 0.2s ease;
-  }
-  textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
-  input:hover, textarea:hover, select:hover { border-color: var(--accent); }
-
-  .checks { display: flex; gap: 18px; margin-top: 14px; font-size: 14px; color: var(--ink-soft); flex-wrap: wrap; }
-  .checks label { display: flex; align-items: center; gap: 8px; font-weight: 500; margin: 0; cursor: pointer; transition: color 0.2s ease; }
-  .checks label:hover { color: var(--accent); }
-  input[type="checkbox"] { accent-color: var(--accent); width: 18px; height: 18px; cursor: pointer; }
-
-  button { font-family: var(--body); font-size: 14px; font-weight: 600; padding: 12px 20px; border: none;
-    background: var(--accent); color: #fff; cursor: pointer; border-radius: 8px; transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm); }
-  button:hover:not(:disabled) { background: var(--accent-hover); box-shadow: var(--shadow); transform: translateY(-1px); }
-  button:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
-  button:disabled { opacity: 0.6; cursor: not-allowed; }
-  button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); box-shadow: none; }
-  button.secondary:hover:not(:disabled) { background: var(--accent-dim); }
-  .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-
-  .feedback { margin-top: 16px; padding: 12px 16px; border-left: 4px solid var(--ink-faint); background: #faf9f5; border-radius: 8px;
-    font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--ink-soft); white-space: pre-wrap; word-break: break-word; box-shadow: var(--shadow-sm); }
-  .feedback.ok { border-left-color: var(--accent); color: var(--ink); background: var(--accent-dim); }
-  .feedback.error { border-left-color: #dc2626; color: #dc2626; background: #fee2e2; }
-  .feedback:empty { display: none; }
-
-  .filters { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
-  .filters .field { margin: 0; flex: 0 0 180px; }
-  .filters .checks { margin: 0 0 11px; }
-
-  .results-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 12px; border-bottom: 2px solid var(--rule); margin-bottom: 8px; }
-  .results-head h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; }
-  .results-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); text-transform: uppercase; font-weight: 600; }
-
-  .posting { background: var(--panel); border: 1px solid var(--rule); padding: 18px 20px; margin-top: 14px; border-radius: 10px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
-  .posting:hover { box-shadow: var(--shadow); border-color: var(--accent-dim); transform: translateY(-1px); }
-  .posting-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-  .posting-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .src-tag { padding: 3px 8px; border-radius: 4px; color: #fff; font-weight: 600; box-shadow: var(--shadow-sm); }
-  .src-tag.adzuna { background: var(--tag-adzuna); }
-  .src-tag.usajobs { background: var(--tag-usajobs); }
-  .src-tag.remoteok { background: var(--tag-remoteok); }
-  .posting h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0; line-height: 1.4; }
-  .posting h3 a { color: inherit; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s ease; }
-  .posting h3 a:hover { border-color: var(--accent); color: var(--accent); }
-  .posting-body { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
-  .posting-foot { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--rule); font-family: var(--mono); font-size: 11px;
-    letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); display: flex; gap: 12px; flex-wrap: wrap; }
-  .salary { flex: 0 0 auto; text-align: right; font-family: var(--mono); font-size: 14px; color: var(--accent); font-weight: 600; white-space: nowrap; }
-  .score { display: inline-block; margin-left: 10px; padding: 4px 10px; background: var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 6px; box-shadow: var(--shadow-sm); }
-
-  .empty { border: 2px dashed var(--rule); padding: 48px 28px; text-align: center; color: var(--ink-soft); border-radius: 12px; background: #fafbfc; }
-  .empty strong { display: block; font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--ink); margin-bottom: 8px; }
-  .empty p { margin: 0; font-size: 14px; line-height: 1.6; }
-
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .workspace { max-width: 1500px; margin: 0 auto; padding: 0 28px 72px; }
-  .workspace-grid { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
-  .board { display: grid; grid-template-columns: repeat(5, minmax(210px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 8px; }
-  .lane { background: #f8fafc; border: 1px solid var(--rule); border-radius: 10px; padding: 12px; min-height: 180px; }
-  .lane h3 { margin: 0 0 10px; font-size: 13px; text-transform: capitalize; }
-  .card { background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
-  .card strong { display: block; font-size: 13px; line-height: 1.35; }
-  .card small { color: var(--ink-soft); }
-  .card select { margin-top: 9px; padding: 7px; font-size: 12px; }
-  .compact { padding: 8px 11px; font-size: 12px; }
-  .job-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  .identity { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
-  @media (max-width: 880px) { .workspace { padding: 0 18px 56px; } .workspace-grid { grid-template-columns: 1fr; } .identity { grid-template-columns: 1fr; } }
+:root{--bg:#f4f7f9;--card:#fff;--text:#17212b;--muted:#607080;--line:#dce4e9;--brand:#087f72;--soft:#e6f6f2;--danger:#b42318;--shadow:0 8px 24px rgba(25,43,55,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width:1240px;margin:auto;padding:0 24px}.topbar{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}.topbar .shell{display:flex;align-items:center;gap:26px;min-height:68px}.brand{font-size:20px;font-weight:800;margin-right:auto}.brand span{color:var(--brand)}nav{display:flex;gap:6px}nav button{border:0;background:transparent;padding:10px 13px;border-radius:8px;color:var(--muted);font-weight:650}nav button.active,nav button:hover{background:var(--soft);color:var(--brand)}.user-chip{font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis}.page{padding:38px 0 72px}.view{display:none}.view.active{display:block}.hero{max-width:760px;margin-bottom:26px}.hero h1{font-size:34px;line-height:1.15;margin:0 0 10px}.hero p{color:var(--muted);font-size:16px;margin:0}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow)}.card+.card{margin-top:18px}.card h2,.card h3{margin:0 0 8px}.note{color:var(--muted);margin:0 0 18px}.grid{display:grid;gap:18px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.field label{display:block;font-size:12px;font-weight:750;margin:0 0 6px}.field.full{grid-column:1/-1}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;padding:11px 12px;color:var(--text)}textarea{min-height:100px;resize:vertical}input:focus,select:focus,textarea:focus{outline:3px solid #bcebe2;border-color:var(--brand)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{border:1px solid var(--brand);background:var(--brand);color:#fff;padding:10px 15px;border-radius:9px;font-weight:700}.btn.secondary{background:#fff;color:var(--brand)}.btn.ghost{border-color:var(--line);background:#fff;color:var(--text)}.btn.danger{border-color:#f0c5c1;background:#fff;color:var(--danger)}.btn.small{padding:7px 10px;font-size:12px}.feedback{display:none;margin-top:14px;padding:10px 12px;border-radius:8px;background:#eef2f4;color:var(--muted)}.feedback.show{display:block}.feedback.ok{background:var(--soft);color:#056056}.feedback.error{background:#fff0ef;color:var(--danger)}.search-box{display:grid;grid-template-columns:1fr auto;gap:10px}.filters{display:grid;grid-template-columns:100px 1fr 160px auto;gap:10px;margin-top:12px;align-items:end}.results-head{display:flex;justify-content:space-between;align-items:center;margin:28px 0 12px}.results-head h2{margin:0}.muted{color:var(--muted)}.empty{border:2px dashed var(--line);border-radius:14px;text-align:center;padding:46px 20px;color:var(--muted);background:rgba(255,255,255,.5)}.job{background:#fff;border:1px solid var(--line);border-radius:13px;padding:19px;margin-bottom:13px;box-shadow:0 3px 12px rgba(25,43,55,.05)}.job-top{display:flex;justify-content:space-between;gap:16px}.job h3{margin:4px 0;font-size:18px}.job h3 a{color:var(--text);text-decoration:none}.job h3 a:hover{color:var(--brand)}.meta{color:var(--muted);font-size:12px}.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--soft);color:var(--brand);font-size:11px;font-weight:800}.score{font-weight:800;color:var(--brand);white-space:nowrap}.description{color:#40515f;margin:12px 0}.board{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;overflow-x:auto}.lane{background:#eef3f5;border:1px solid var(--line);border-radius:12px;padding:12px;min-height:180px}.lane h3{font-size:13px;text-transform:capitalize}.app-card{background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px;margin-top:10px}.app-card strong{display:block}.app-card small{color:var(--muted)}.stale{color:#a15c00;font-weight:750}.saved-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.saved-item{border:1px solid var(--line);border-radius:10px;padding:13px}.onboarding{max-width:680px;margin:60px auto}.steps{display:flex;gap:8px;margin-bottom:20px}.step{flex:1;height:5px;border-radius:99px;background:var(--line)}.step.done{background:var(--brand)}details{border:1px solid var(--line);border-radius:10px;padding:12px}code{background:#eef2f4;padding:2px 5px;border-radius:4px}@media(max-width:850px){.topbar .shell{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}nav{order:3;width:100%;overflow:auto}.user-chip{display:none}.grid.two,.form-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.search-box{grid-template-columns:1fr}.saved-list{grid-template-columns:1fr}.hero h1{font-size:28px}}
 </style>
 </head>
 <body>
+<header class="topbar"><div class="shell"><div class="brand">🎯 Job Hunting <span>Copilot</span></div><nav id="nav"><button data-view="search">Find jobs</button><button data-view="pipeline">Pipeline</button><button data-view="profile">Profile</button><button data-view="admin">Admin</button></nav><div class="user-chip" id="user-chip">No workspace selected</div></div></header>
 
-<header class="masthead">
-  <div class="masthead-inner">
-    <h1 class="wordmark">🎯 Job Hunting <span>Copilot</span></h1>
-    <p class="tagline">Sync live postings, embed them with Databricks GTE, and retrieve configurable top-K semantic matches from Lakebase.</p>
-    <div class="statusline" id="statusline" aria-live="polite">📊 Reading pipeline status&hellip;</div>
-  </div>
-</header>
+<main class="shell page">
+<section class="view" id="view-onboarding"><div class="onboarding card"><div class="steps"><span class="step done"></span><span class="step"></span><span class="step"></span></div><h1>Start your job search</h1><p class="note">Choose a workspace identity. Next, create a profile and upload your resume before searching.</p><div class="form-grid"><div class="field"><label>Email</label><input id="start-email" placeholder="you@example.com"></div><div class="field"><label>Display name</label><input id="start-name" placeholder="Your name"></div></div><div class="actions"><button class="btn" id="start-workspace">Continue to profile</button></div><div class="feedback" id="start-feedback"></div></div></section>
 
-<main class="layout">
-  <div>
-    <section class="panel">
-      <p class="eyebrow">Step 1</p>
-      <h2>🔄 Sync postings</h2>
-      <p class="note">Searches every keyword against each configured source and upserts normalized postings into <code>job_postings</code>.</p>
+<section class="view" id="view-search"><div class="hero"><h1>Find jobs that fit you</h1><p>Describe what you want. Results appear only when you search or explicitly browse.</p></div><div class="card" style="margin-bottom:18px"><strong id="active-profile-label">No active profile</strong><span class="muted"> · Your target roles and constraints guide semantic search.</span> <button class="btn small ghost" onclick="showView('profile')">Change profile</button></div><div class="card"><div class="search-box"><textarea id="semantic-query" placeholder="Example: Data engineer using Databricks, PySpark, Delta Lake, AWS, and Airflow"></textarea><button class="btn" id="btn-semantic">Search jobs</button></div><div class="filters"><div class="field"><label>Top results</label><input id="top-k" type="number" min="1" max="25" value="5"></div><div class="field"><label>Location</label><input id="semantic-location" placeholder="New York"></div><div class="field"><label>Minimum salary</label><input id="semantic-salary" type="number" min="0" placeholder="100000"></div><label><input id="semantic-remote" type="checkbox" style="width:auto"> Remote only</label></div><div class="actions"><button class="btn secondary" id="btn-browse">Browse recent jobs</button></div><div class="feedback" id="search-feedback"></div></div><div class="results-head"><h2>Results</h2><span class="muted" id="results-count"></span></div><div id="results"><div class="empty"><strong>Start with a search</strong><br>We won’t fill the page with every posting automatically.</div></div></section>
 
-      <div class="field">
-        <label for="keywords">🔍 Search keywords</label>
-        <textarea id="keywords" rows="4" placeholder="software engineer&#10;data engineer">software engineer
-data engineer
-machine learning engineer</textarea>
-      </div>
+<section class="view" id="view-pipeline"><div class="hero"><h1>Your application pipeline</h1><p>Bookmarks are ideas. Tracked applications move through five clear stages.</p></div><div class="card"><div class="results-head" style="margin-top:0"><h2>Tracked applications</h2><span id="pipeline-count" class="muted"></span></div><div class="board" id="pipeline-board"></div><div class="feedback" id="pipeline-feedback"></div></div><div class="card"><h2>Saved bookmarks</h2><p class="note">Jobs you saved for later but haven’t necessarily started tracking.</p><div class="saved-list" id="saved-list"></div></div></section>
 
-      <div class="field">
-        <label for="location">📍 Location (optional)</label>
-        <input type="text" id="location" placeholder="Austin, TX">
-      </div>
+<section class="view" id="view-profile"><div class="hero"><h1>Your search profile</h1><p>Create a profile first, then upload the resume the Copilot should use for context.</p></div><div class="grid two"><div class="card"><h2>Create a profile</h2><div class="form-grid"><div class="field"><label>Profile label</label><input id="profile-label" value="default"></div><div class="field"><label>Work preference</label><select id="profile-remote"><option value="any">Any</option><option value="remote_only">Remote only</option><option value="hybrid">Hybrid</option><option value="onsite">Onsite</option></select></div><div class="field full"><label>Target roles, comma-separated</label><input id="profile-roles" placeholder="Data Engineer, Analytics Engineer"></div><div class="field full"><label>Preferred locations, comma-separated</label><input id="profile-locations" placeholder="New York, Remote"></div></div><div class="actions"><button class="btn" id="btn-profile">Create profile</button></div><div class="feedback" id="profile-feedback"></div></div><div class="card"><h2>Resume</h2><div class="field"><label>Active profile</label><select id="profile-select"><option value="">Create a profile first</option></select></div><div class="field" style="margin-top:14px"><label>UTF-8 resume (.txt or .md)</label><input id="resume-file" type="file" accept=".txt,.md,text/plain,text/markdown"></div><div class="actions"><button class="btn secondary" id="btn-resume">Upload resume</button></div><p class="note" style="margin-top:14px">PDF/DOCX extraction can be added during polish. Phase 5 stores validated plain text.</p></div></div><div class="card"><h2>Switch or create another workspace</h2><p class="note">This is a development identity selector, not production authentication.</p><div class="form-grid"><div class="field"><label>Email</label><input id="user-email"></div><div class="field"><label>Display name</label><input id="display-name"></div></div><div class="actions"><button class="btn ghost" id="btn-user">Use workspace</button><button class="btn ghost" id="clear-user">Start as another user</button></div><div class="feedback" id="user-feedback"></div></div></section>
 
-      <div class="field">
-        <label for="limit">📊 Postings per source, per keyword</label>
-        <input type="number" id="limit" value="25" min="1" max="200">
-      </div>
-
-      <div class="actions">
-        <button id="btn-sync">🚀 Sync postings</button>
-      </div>
-      <div class="feedback" id="sync-feedback" aria-live="polite"></div>
-    </section>
-
-    <section class="panel" style="margin-top: 20px;">
-      <p class="eyebrow">Step 2</p>
-      <h2>🤖 Embed postings</h2>
-      <p class="note">Embeds only new or content-changed postings. The notebook is the recommended batch path; this button is useful for a small App smoke test.</p>
-      <div class="field">
-        <label for="embed-limit">📈 Maximum postings</label>
-        <input type="number" id="embed-limit" value="50" min="1" max="500">
-      </div>
-      <div class="actions"><button id="btn-embed">⚡ Embed pending</button></div>
-      <div class="feedback" id="embed-feedback" aria-live="polite"></div>
-    </section>
-  </div>
-
-  <div>
-    <section class="panel" style="margin-bottom: 20px;">
-      <p class="eyebrow">Browse</p>
-      <h2>🎯 Find your perfect job</h2>
-      <p class="note">Use natural language to search or browse all synced postings from Lakebase.</p>
-
-      <div class="field">
-        <label for="semantic-query">💬 Natural-language job search</label>
-        <textarea id="semantic-query" rows="3" placeholder="senior data engineer with Databricks, Python, SQL, and AWS"></textarea>
-      </div>
-      <div class="filters">
-        <div class="field"><label for="top-k">🎯 Top K</label><input type="number" id="top-k" value="5" min="1" max="25"></div>
-        <div class="field"><label for="semantic-location">📍 Location</label><input type="text" id="semantic-location" placeholder="New York"></div>
-        <div class="field"><label for="semantic-salary">💰 Min salary</label><input type="number" id="semantic-salary" min="0" placeholder="100000"></div>
-        <div class="checks">
-          <label><input type="checkbox" id="semantic-remote"> 🏠 Remote only</label>
-          <label><input type="checkbox" id="relevant-only"> ⭐ Relevant jobs only</label>
-        </div>
-      </div>
-      <div class="actions"><button id="btn-semantic">🔎 Semantic search</button></div>
-      <div class="feedback" id="search-feedback" aria-live="polite"></div>
-
-      <div class="filters" style="margin-top: 28px;">
-        <div class="field">
-          <label for="filter-source">📂 Source</label>
-          <select id="filter-source">
-            <option value="">All</option>
-            <option value="adzuna">Adzuna</option>
-            <option value="usajobs">USAJobs</option>
-            <option value="remoteok">RemoteOK</option>
-          </select>
-        </div>
-        <div class="checks">
-          <label><input type="checkbox" id="filter-remote"> 🏠 Remote only</label>
-        </div>
-        <button class="secondary" id="btn-refresh" type="button">🔄 Refresh</button>
-      </div>
-    </section>
-
-    <div class="results-head">
-      <h2>📋 Postings</h2>
-      <span class="count" id="results-count"></span>
-    </div>
-    <div id="results">
-      <div class="empty">
-        <strong>✨ Nothing synced yet</strong>
-        <p>Sync a few keywords to pull postings into Lakebase and start your job search.</p>
-      </div>
-    </div>
-  </div>
+<section class="view" id="view-admin"><div class="hero"><h1>Data operations</h1><p>These controls maintain the catalog. Job seekers do not need them for the normal flow.</p></div><div class="grid two"><div class="card"><h2>Sync job APIs</h2><div class="field"><label>Keywords, one per line</label><textarea id="keywords">software engineer\ndata engineer\nmachine learning engineer</textarea></div><div class="field"><label>Location</label><input id="sync-location"></div><div class="field"><label>Limit per source</label><input id="limit" type="number" value="25" min="1" max="200"></div><div class="actions"><button class="btn" id="btn-sync">Sync now</button></div><div class="feedback" id="sync-feedback"></div></div><div class="card"><h2>Embedding coverage</h2><p class="note" id="admin-status">Reading status…</p><div class="field"><label>Maximum pending postings</label><input id="embed-limit" type="number" value="50" min="1" max="500"></div><div class="actions"><button class="btn" id="btn-embed">Embed pending</button></div><div class="feedback" id="embed-feedback"></div><details style="margin-top:18px"><summary>Why is this hidden?</summary><p>Phase 4 normally runs sync and embedding on a schedule. Manual buttons remain here for testing and recovery.</p></details></div></div></section>
 </main>
 
-<section class="workspace" id="workspace">
-  <div class="panel" style="margin-bottom:20px">
-    <p class="eyebrow">Phase 3 workspace</p>
-    <h2>👤 Choose your workspace identity</h2>
-    <p class="note">This selects which Lakebase records you see; it is a development identity, not login authentication.</p>
-    <div class="identity">
-      <div class="field"><label for="user-email">Email</label><input id="user-email" type="text" placeholder="you@example.com"></div>
-      <div class="field"><label for="display-name">Display name</label><input id="display-name" type="text" placeholder="Your name"></div>
-      <button id="btn-user">Use workspace</button>
-    </div>
-    <div class="feedback" id="user-feedback"></div>
-  </div>
-
-  <div class="workspace-grid">
-    <div>
-      <section class="panel">
-        <p class="eyebrow">Profile</p><h2>📄 Resume profile</h2>
-        <div class="field"><label for="profile-label">Profile label</label><input id="profile-label" type="text" value="default"></div>
-        <div class="field"><label for="profile-roles">Target roles (comma-separated)</label><input id="profile-roles" type="text" placeholder="Data Engineer, Analytics Engineer"></div>
-        <div class="field"><label for="profile-locations">Preferred locations</label><input id="profile-locations" type="text" placeholder="New York, Remote"></div>
-        <div class="field"><label for="profile-remote">Work preference</label><select id="profile-remote"><option value="any">Any</option><option value="remote_only">Remote only</option><option value="hybrid">Hybrid</option><option value="onsite">Onsite</option></select></div>
-        <div class="actions"><button id="btn-profile">Create profile</button></div>
-        <div class="field"><label for="profile-select">Active profile</label><select id="profile-select"><option value="">Create a profile first</option></select></div>
-        <div class="field"><label for="resume-file">Upload resume (.txt or .md)</label><input id="resume-file" type="file" accept=".txt,.md,text/plain,text/markdown"></div>
-        <div class="actions"><button id="btn-resume" class="secondary">Upload to Lakebase</button></div>
-        <div class="feedback" id="profile-feedback"></div>
-      </section>
-    </div>
-
-    <section class="panel">
-      <div class="results-head"><h2>🗂 Application pipeline</h2><span class="count" id="pipeline-count"></span></div>
-      <p class="note">Track a job from the search results, then move it through the pipeline. Every change persists in Lakebase.</p>
-      <div class="board" id="pipeline-board"></div>
-      <div class="feedback" id="pipeline-feedback"></div>
-    </section>
-  </div>
-</section>
-
 <script>
-  const $ = (id) => document.getElementById(id);
-  const stages = ["saved", "applied", "interviewing", "rejected", "offer"];
-  let activeUser = JSON.parse(localStorage.getItem("jobCopilotUser") || "null");
-  const escapeHtml = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-
-  function say(node, message, kind) {
-    node.textContent = message;
-    node.className = "feedback" + (kind ? " " + kind : "");
-  }
-
-  async function callApi(path, options) {
-    const response = await fetch(path, options);
-    let payload;
-    try { payload = await response.json(); }
-    catch (err) { throw new Error("Unreadable response (HTTP " + response.status + ")."); }
-    if (!response.ok) throw new Error(payload.error || "Request failed (HTTP " + response.status + ").");
-    return payload;
-  }
-
-  async function refreshStatus() {
-    const line = $("statusline");
-    try {
-      const h = await callApi("/healthz");
-      const stats = await callApi("/jobs/stats");
-      let embeddings = null;
-      try { embeddings = await callApi("/jobs/embeddings/status"); } catch (ignored) {}
-      const srcs = h.sources_configured || {};
-      const srcLabel = (name, on) => (on ? "<b>" + name + "</b>" : '<span class="warn">' + name + " off</span>");
-      line.innerHTML =
-        "📊 Lakebase" +
-        '<span class="sep">/</span>postings <b>' + String(stats.total_postings || 0).padStart(4, "0") + "</b>" +
-        '<span class="sep">/</span>sources ' + [srcLabel("adzuna", srcs.adzuna), srcLabel("usajobs", srcs.usajobs), srcLabel("remoteok", srcs.remoteok)].join(", ") +
-        (embeddings ? '<span class="sep">/</span>embedded <b>' + embeddings.embedded_postings + '</b> of ' + embeddings.total_postings : '');
-    } catch (err) {
-      line.innerHTML = "📊 Connecting to Lakebase...";
-    }
-  }
-
-  $("btn-sync").addEventListener("click", async () => {
-    const button = $("btn-sync");
-    const feedback = $("sync-feedback");
-    const keywords = $("keywords").value.split(/[\n;]+/).map((s) => s.trim()).filter(Boolean);
-    if (!keywords.length) { say(feedback, "Add at least one keyword, one per line.", "error"); return; }
-
-    const location = $("location").value.trim();
-    button.disabled = true;
-    button.innerHTML = '🔄 Syncing<span class="spinner"></span>';
-    say(feedback, "📡 Contacting Adzuna, USAJobs, and RemoteOK…");
-
-    try {
-      const result = await callApi("/jobs/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          queries: keywords.map((keyword) => ({ keyword, location })),
-          limit_per_source: Number($("limit").value) || 25
-        })
-      });
-      const bySource = Object.entries(result.by_source || {}).map(([s, n]) => s + ": " + n).join(", ") || "none";
-      let message = "✅ Synced " + result.synced + " postings (" + bySource + ").";
-      if (result.errors && result.errors.length) {
-        message += "\n" + result.errors.map((e) => "⚠️ " + e.source + " — " + e.error).join("\n");
-      }
-      say(feedback, message, "ok");
-      refreshStatus();
-      loadPostings();
-    } catch (err) {
-      say(feedback, "❌ " + err.message, "error");
-    } finally {
-      button.disabled = false;
-      button.innerHTML = "🚀 Sync postings";
-    }
-  });
-
-  function renderPostings(payload) {
-    const container = $("results");
-    const postings = payload.postings || [];
-    $("results-count").textContent = postings.length ? postings.length + " shown" : "";
-
-    if (!postings.length) {
-      container.innerHTML = '<div class="empty"><strong>🔍 No postings match</strong><p>Try syncing more keywords or clearing filters.</p></div>';
-      return;
-    }
-
-    container.innerHTML = postings.map((p) => {
-      const salaryParts = [];
-      if (p.salary_min) salaryParts.push("$" + Math.round(p.salary_min).toLocaleString());
-      if (p.salary_max && p.salary_max !== p.salary_min) salaryParts.push("$" + Math.round(p.salary_max).toLocaleString());
-      const salary = salaryParts.length ? salaryParts.join(" – ") : "";
-
-      const foot = [];
-      if (p.employment_type) foot.push("💼 " + escapeHtml(p.employment_type));
-      if (p.posted_at) foot.push("📅 posted " + new Date(p.posted_at).toLocaleDateString());
-      foot.push("🔄 synced " + new Date(p.synced_at).toLocaleDateString());
-
-      return '<article class="posting">' +
-        '<div class="posting-top"><div>' +
-        '<p class="posting-meta"><span class="src-tag ' + escapeHtml(p.source) + '">' + escapeHtml(p.source) + '</span>' +
-        '<span>🏢 ' + escapeHtml(p.company || "Unknown company") + '</span>' +
-        (p.remote ? '<span>🏠 Remote</span>' : (p.location ? '<span>📍 ' + escapeHtml(p.location) + '</span>' : '')) + '</p>' +
-        '<h3>' + (p.apply_url ? '<a href="' + escapeHtml(p.apply_url) + '" target="_blank" rel="noopener">' + escapeHtml(p.title) + '</a>' : escapeHtml(p.title)) +
-        (p.similarity != null ? '<span class="score">⭐ ' + (Number(p.similarity) * 100).toFixed(1) + '% match</span>' : '') + '</h3>' +
-        '</div>' + (salary ? '<div class="salary">💰 ' + salary + '</div>' : '') + '</div>' +
-        '<p class="posting-body">' + escapeHtml(p.description_preview) + (p.description_preview && p.description_preview.length >= 300 ? '…' : '') + '</p>' +
-        '<p class="posting-foot">' + foot.join(" · ") + '</p>' +
-        '<div class="job-actions"><button class="compact save-job" data-job-id="' + escapeHtml(p.id) + '">🔖 Save</button>' +
-        '<button class="compact secondary track-job" data-job-id="' + escapeHtml(p.id) + '">📌 Track application</button></div>' +
-        '</article>';
-    }).join("");
-  }
-
-  async function loadPostings() {
-    const params = new URLSearchParams();
-    const source = $("filter-source").value;
-    if (source) params.set("source", source);
-    if ($("filter-remote").checked) params.set("remote_only", "true");
-    params.set("limit", "50");
-    try {
-      const payload = await callApi("/jobs?" + params.toString());
-      renderPostings(payload);
-    } catch (err) {
-      $("results").innerHTML = '<div class="empty"><strong>⚠️ Could not load postings</strong><p>' + escapeHtml(err.message) + '</p></div>';
-    }
-  }
-
-  $("btn-refresh").addEventListener("click", loadPostings);
-  $("filter-source").addEventListener("change", loadPostings);
-  $("filter-remote").addEventListener("change", loadPostings);
-
-  $("btn-embed").addEventListener("click", async () => {
-    const button = $("btn-embed"), feedback = $("embed-feedback");
-    button.disabled = true;
-    button.innerHTML = '⚡ Embedding<span class="spinner"></span>';
-    say(feedback, "🤖 Calling the hosted embedding endpoint…");
-    try {
-      const result = await callApi("/jobs/embed", {
-        method: "POST", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({limit: Number($("embed-limit").value) || 50, batch_size: 8})
-      });
-      say(feedback, "✅ Embedded " + result.embedded_postings + " postings and wrote " + result.written_chunks + " chunks.", "ok");
-      refreshStatus();
-    } catch (err) { say(feedback, "❌ " + err.message, "error"); }
-    finally { button.disabled = false; button.innerHTML = "⚡ Embed pending"; }
-  });
-
-  $("btn-semantic").addEventListener("click", async () => {
-    const button = $("btn-semantic"), feedback = $("search-feedback");
-    const text = $("semantic-query").value.trim();
-    if (!text) { say(feedback, "❌ Describe the kind of job you want.", "error"); return; }
-    button.disabled = true;
-    button.innerHTML = '🔎 Searching<span class="spinner"></span>';
-    say(feedback, "🤖 Embedding your query and searching Lakebase…");
-    try {
-      const source = $("filter-source").value;
-      const payload = await callApi("/jobs/search", {
-        method: "POST", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          query: text, top_k: Number($("top-k").value) || 5,
-          sources: source ? [source] : [],
-          remote_only: $("semantic-remote").checked,
-          location: $("semantic-location").value.trim(),
-          minimum_salary: $("semantic-salary").value ? Number($("semantic-salary").value) : null,
-          relevant_only: $("relevant-only").checked
-        })
-      });
-      renderPostings(payload);
-      say(feedback, "✅ Returned " + payload.postings.length + " semantic matches.", "ok");
-    } catch (err) { say(feedback, "❌ " + err.message, "error"); }
-    finally { button.disabled = false; button.innerHTML = "🔎 Semantic search"; }
-  });
-
-  function requireUser() {
-    if (!activeUser) throw new Error("Choose your workspace identity first.");
-    return activeUser.id;
-  }
-
-  async function loadProfiles() {
-    if (!activeUser) return;
-    const payload = await callApi("/api/profiles?user_id=" + encodeURIComponent(activeUser.id));
-    const select = $("profile-select");
-    select.innerHTML = payload.profiles.length
-      ? payload.profiles.map((p) => '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.label) + (p.has_resume ? " · resume uploaded" : "") + '</option>').join("")
-      : '<option value="">Create a profile first</option>';
-  }
-
-  $("btn-user").addEventListener("click", async () => {
-    try {
-      activeUser = await callApi("/api/users/session", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email:$("user-email").value, display_name:$("display-name").value})});
-      localStorage.setItem("jobCopilotUser", JSON.stringify(activeUser));
-      say($("user-feedback"), "✅ Using workspace for " + activeUser.email, "ok");
-      await Promise.all([loadProfiles(), loadPipeline()]);
-    } catch (err) { say($("user-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  $("btn-profile").addEventListener("click", async () => {
-    try {
-      const user_id = requireUser();
-      await callApi("/api/profiles", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id, label:$("profile-label").value, target_roles:$("profile-roles").value.split(","), locations_preferred:$("profile-locations").value.split(","), remote_preference:$("profile-remote").value, is_default:true})});
-      await loadProfiles(); say($("profile-feedback"), "✅ Profile saved in Lakebase.", "ok");
-    } catch (err) { say($("profile-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  $("btn-resume").addEventListener("click", async () => {
-    try {
-      const user_id = requireUser(), profile = $("profile-select").value, file = $("resume-file").files[0];
-      if (!profile || !file) throw new Error("Select a profile and a .txt or .md resume.");
-      const form = new FormData(); form.append("resume", file);
-      await callApi("/api/profiles/" + encodeURIComponent(profile) + "/resume?user_id=" + encodeURIComponent(user_id), {method:"POST", body:form});
-      await loadProfiles(); say($("profile-feedback"), "✅ Resume text uploaded; its old embedding was cleared for refresh.", "ok");
-    } catch (err) { say($("profile-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  document.addEventListener("click", async (event) => {
-    const save = event.target.closest(".save-job"), track = event.target.closest(".track-job");
-    if (!save && !track) return;
-    try {
-      const user_id = requireUser(), job_posting_id = (save || track).dataset.jobId;
-      const path = save ? "/api/saved-jobs" : "/api/applications";
-      const data = {user_id, job_posting_id};
-      if (!save && $("profile-select").value) data.profile_id = $("profile-select").value;
-      await callApi(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data)});
-      await loadPipeline();
-    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  function renderPipeline(payload) {
-    $("pipeline-count").textContent = payload.application_count + " applications · " + payload.saved_count + " bookmarks";
-    $("pipeline-board").innerHTML = stages.map((stage) => {
-      const cards = (payload.stages[stage] || []).map((a) => '<div class="card"><strong>' + escapeHtml(a.title) + '</strong><small>' + escapeHtml(a.company || "Unknown company") + '</small><select class="stage-select" data-application-id="' + escapeHtml(a.id) + '">' + stages.map((s) => '<option value="' + s + '"' + (s === stage ? " selected" : "") + '>' + s + '</option>').join("") + '</select><button class="compact secondary add-note" data-application-id="' + escapeHtml(a.id) + '" style="margin-top:8px">+ Note</button></div>').join("");
-      return '<div class="lane"><h3>' + escapeHtml(stage) + ' · ' + (payload.stages[stage] || []).length + '</h3>' + (cards || '<small>No jobs</small>') + '</div>';
-    }).join("");
-  }
-
-  async function loadPipeline() {
-    if (!activeUser) return;
-    try { renderPipeline(await callApi("/api/pipeline?user_id=" + encodeURIComponent(activeUser.id))); }
-    catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
-  }
-
-  $("pipeline-board").addEventListener("change", async (event) => {
-    if (!event.target.matches(".stage-select")) return;
-    try {
-      await callApi("/api/applications/" + encodeURIComponent(event.target.dataset.applicationId) + "/stage", {method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id:requireUser(), stage:event.target.value})});
-      await loadPipeline(); say($("pipeline-feedback"), "✅ Stage updated in Lakebase.", "ok");
-    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  $("pipeline-board").addEventListener("click", async (event) => {
-    const button = event.target.closest(".add-note"); if (!button) return;
-    const note = prompt("Interview or follow-up note:"); if (!note) return;
-    try {
-      await callApi("/api/applications/" + encodeURIComponent(button.dataset.applicationId) + "/notes", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({user_id:requireUser(), note, interview_type:"other"})});
-      await loadPipeline(); say($("pipeline-feedback"), "✅ Note added.", "ok");
-    } catch (err) { say($("pipeline-feedback"), "❌ " + err.message, "error"); }
-  });
-
-  refreshStatus();
-  loadPostings();
-  if (activeUser) {
-    $("user-email").value = activeUser.email || "";
-    $("display-name").value = activeUser.display_name || "";
-    say($("user-feedback"), "✅ Using workspace for " + activeUser.email, "ok");
-    loadProfiles(); loadPipeline();
-  }
+const $=id=>document.getElementById(id), stages=["saved","applied","interviewing","rejected","offer"];
+let activeUser=JSON.parse(localStorage.getItem("jobCopilotUser")||"null"), profiles=[];
+const escapeHtml=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function feedback(id,message,kind=""){const n=$(id);n.textContent=message;n.className="feedback show "+kind}
+async function api(path,options){const r=await fetch(path,options);let p;try{p=await r.json()}catch{throw new Error("Unreadable response (HTTP "+r.status+")")}if(!r.ok)throw new Error(p.error||"Request failed");return p}
+function requireUser(){if(!activeUser)throw new Error("Choose a workspace first.");return activeUser.id}
+function showView(name){document.querySelectorAll(".view").forEach(n=>n.classList.toggle("active",n.id==="view-"+name));document.querySelectorAll("nav button").forEach(n=>n.classList.toggle("active",n.dataset.view===name));if(name==="pipeline")loadPipeline();if(name==="admin")loadAdminStatus();window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{if(!activeUser)return showView("onboarding");showView(b.dataset.view)});
+function setUser(user){activeUser=user;localStorage.setItem("jobCopilotUser",JSON.stringify(user));$("user-chip").textContent=user.display_name||user.email;$("user-email").value=user.email||"";$("display-name").value=user.display_name||""}
+async function selectUser(email,name){const user=await api("/api/users/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,display_name:name})});setUser(user);await loadProfiles();showView(profiles.length?"search":"profile");return user}
+$("start-workspace").onclick=async()=>{try{await selectUser($("start-email").value,$("start-name").value)}catch(e){feedback("start-feedback","❌ "+e.message,"error")}};
+$("btn-user").onclick=async()=>{try{const u=await selectUser($("user-email").value,$("display-name").value);feedback("user-feedback","Using "+u.email,"ok")}catch(e){feedback("user-feedback","❌ "+e.message,"error")}};
+$("clear-user").onclick=()=>{localStorage.removeItem("jobCopilotUser");activeUser=null;profiles=[];$("user-chip").textContent="No workspace selected";showView("onboarding")};
+async function loadProfiles(){if(!activeUser)return;const p=await api("/api/profiles?user_id="+encodeURIComponent(activeUser.id));profiles=p.profiles||[];$("profile-select").innerHTML=profiles.length?profiles.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.label)}${x.has_resume?" · resume uploaded":""}</option>`).join(""):'<option value="">Create a profile first</option>';$("active-profile-label").textContent=profiles.length?"Active profile: "+profiles[0].label:"No active profile";if(profiles.length)$("profile-label").value="profile "+(profiles.length+1)}
+$("profile-select").onchange=()=>{const p=profiles.find(x=>x.id===$("profile-select").value);if(p)$("active-profile-label").textContent="Active profile: "+p.label};
+$("btn-profile").onclick=async()=>{try{const user_id=requireUser();await api("/api/profiles",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id,label:$("profile-label").value,target_roles:$("profile-roles").value.split(","),locations_preferred:$("profile-locations").value.split(","),remote_preference:$("profile-remote").value,is_default:true})});await loadProfiles();feedback("profile-feedback","Profile created. Upload your resume next.","ok")}catch(e){feedback("profile-feedback","❌ "+e.message,"error")}};
+$("btn-resume").onclick=async()=>{try{const user_id=requireUser(),pid=$("profile-select").value,file=$("resume-file").files[0];if(!pid||!file)throw new Error("Select a profile and resume file.");const form=new FormData();form.append("resume",file);await api(`/api/profiles/${encodeURIComponent(pid)}/resume?user_id=${encodeURIComponent(user_id)}`,{method:"POST",body:form});await loadProfiles();feedback("profile-feedback","Resume uploaded. You’re ready to search.","ok")}catch(e){feedback("profile-feedback","❌ "+e.message,"error")}};
+function formatDate(v){if(!v)return"";const d=new Date(v);return Number.isNaN(d.getTime())?"":d.toLocaleDateString()}
+function renderJobs(payload){const jobs=payload.postings||[];$("results-count").textContent=jobs.length?jobs.length+" jobs":"";if(!jobs.length){$("results").innerHTML='<div class="empty"><strong>No matching jobs</strong><br>Try a broader request or browse recent jobs.</div>';return}$("results").innerHTML=jobs.map(p=>{const salary=p.salary_max?"$"+Math.round(p.salary_max).toLocaleString():"";return `<article class="job"><div class="job-top"><div><div class="meta"><span class="badge">${escapeHtml(p.source)}</span> · ${escapeHtml(p.company||"Unknown company")} ${p.remote?"· Remote":p.location?"· "+escapeHtml(p.location):""}</div><h3>${p.apply_url?`<a href="${escapeHtml(p.apply_url)}" target="_blank" rel="noopener">${escapeHtml(p.title)}</a>`:escapeHtml(p.title)}</h3></div><div class="score">${p.similarity!=null?(Number(p.similarity)*100).toFixed(1)+"% match":salary}</div></div><p class="description">${escapeHtml(p.description_preview||"")}</p><div class="meta">${formatDate(p.posted_at)?"Posted "+formatDate(p.posted_at):""}</div><div class="actions"><button class="btn small save-job" data-job="${escapeHtml(p.id)}">Save for later</button><button class="btn small secondary track-job" data-job="${escapeHtml(p.id)}">Track application</button></div></article>`}).join("")}
+$("btn-semantic").onclick=async()=>{const q=$("semantic-query").value.trim();if(!q)return feedback("search-feedback","Describe the job you want.","error");try{const user_id=requireUser();if(!$("profile-select").value)throw new Error("Create a profile first.");feedback("search-feedback","Searching your embedded job catalog…");const p=await api("/jobs/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q,user_id,profile_id:$("profile-select").value,top_k:Number($("top-k").value)||5,remote_only:$("semantic-remote").checked,location:$("semantic-location").value,minimum_salary:$("semantic-salary").value?Number($("semantic-salary").value):null})});renderJobs(p);feedback("search-feedback",`Found ${p.postings.length} matches using profile ${p.profile||"context"}.`,"ok")}catch(e){feedback("search-feedback","❌ "+e.message,"error")}};
+$("btn-browse").onclick=async()=>{try{feedback("search-feedback","Loading recent jobs…");const p=await api("/jobs?limit=25");renderJobs(p);feedback("search-feedback","Showing recent jobs.","ok")}catch(e){feedback("search-feedback","❌ "+e.message,"error")}};
+$("results").onclick=async e=>{const save=e.target.closest(".save-job"),track=e.target.closest(".track-job");if(!save&&!track)return;try{const body={user_id:requireUser(),job_posting_id:(save||track).dataset.job};if(track&&$("profile-select").value)body.profile_id=$("profile-select").value;await api(save?"/api/saved-jobs":"/api/applications",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});(save||track).textContent=save?"Saved ✓":"Tracking ✓";(save||track).disabled=true}catch(err){feedback("search-feedback","❌ "+err.message,"error")}};
+const nextActions={saved:[["Mark applied","applied"]],applied:[["Start interviewing","interviewing"],["Mark rejected","rejected"]],interviewing:[["Mark offer","offer"],["Mark rejected","rejected"]],rejected:[["Move to saved","saved"]],offer:[["Move to saved","saved"]]};
+function renderPipeline(p){$("pipeline-count").textContent=`${p.application_count} tracked · ${p.saved_count} bookmarked`;$("pipeline-board").innerHTML=stages.map(s=>`<div class="lane"><h3>${s} · ${(p.stages[s]||[]).length}</h3>${(p.stages[s]||[]).map(a=>`<div class="app-card"><strong>${escapeHtml(a.title)}</strong><small>${escapeHtml(a.company||"")}</small>${a.is_stale?'<div class="stale">Needs follow-up</div>':""}<div class="actions">${nextActions[s].map(([label,dest])=>`<button class="btn small ${dest==='rejected'?'danger':'secondary'} move-stage" data-id="${escapeHtml(a.id)}" data-stage="${dest}">${label}</button>`).join("")}${s==="interviewing"?`<button class="btn small ghost add-note" data-id="${escapeHtml(a.id)}">Add note</button>`:""}</div></div>`).join("")||'<span class="muted">No jobs</span>'}</div>`).join("");$("saved-list").innerHTML=(p.saved_jobs||[]).map(x=>`<div class="saved-item"><strong>${escapeHtml(x.title)}</strong><div class="muted">${escapeHtml(x.company||"")}</div><div class="actions"><button class="btn small ghost unsave" data-job="${escapeHtml(x.job_posting_id)}">Remove</button></div></div>`).join("")||'<div class="muted">No bookmarks yet.</div>'}
+async function loadPipeline(){if(!activeUser)return;try{renderPipeline(await api("/api/pipeline?user_id="+encodeURIComponent(activeUser.id)))}catch(e){feedback("pipeline-feedback","❌ "+e.message,"error")}}
+$("pipeline-board").onclick=async e=>{const move=e.target.closest(".move-stage"),note=e.target.closest(".add-note");try{if(move){await api(`/api/applications/${encodeURIComponent(move.dataset.id)}/stage`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:requireUser(),stage:move.dataset.stage})});feedback("pipeline-feedback","Stage updated.","ok")}if(note){const text=prompt("Interview note or next action:");if(text)await api(`/api/applications/${encodeURIComponent(note.dataset.id)}/notes`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:requireUser(),note:text,interview_type:"other"})})}await loadPipeline()}catch(err){feedback("pipeline-feedback","❌ "+err.message,"error")}};
+$("saved-list").onclick=async e=>{const b=e.target.closest(".unsave");if(!b)return;try{await api(`/api/saved-jobs/${encodeURIComponent(b.dataset.job)}?user_id=${encodeURIComponent(requireUser())}`,{method:"DELETE"});await loadPipeline()}catch(err){feedback("pipeline-feedback","❌ "+err.message,"error")}};
+async function loadAdminStatus(){try{const s=await api("/jobs/stats"),e=await api("/jobs/embeddings/status"),r=await api("/jobs/pipeline/status");$("admin-status").textContent=`${s.total_postings||0} postings · ${e.embedded_postings||0} embedded · latest scheduled run: ${r.latest_run?.status||"none"}`}catch(err){$("admin-status").textContent=err.message}}
+$("btn-sync").onclick=async()=>{try{const queries=$("keywords").value.split(/\n|;/).map(x=>x.trim()).filter(Boolean).map(keyword=>({keyword,location:$("sync-location").value}));const p=await api("/jobs/sync",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({queries,limit_per_source:Number($("limit").value)||25})});feedback("sync-feedback",`Synced ${p.synced} postings.`,"ok");loadAdminStatus()}catch(e){feedback("sync-feedback","❌ "+e.message,"error")}};
+$("btn-embed").onclick=async()=>{try{const p=await api("/jobs/embed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({limit:Number($("embed-limit").value)||50,batch_size:8})});feedback("embed-feedback",`Embedded ${p.embedded_postings} postings and wrote ${p.written_chunks} chunks.`,"ok");loadAdminStatus()}catch(e){feedback("embed-feedback","❌ "+e.message,"error")}};
+(async function boot(){if(!activeUser){showView("onboarding");return}setUser(activeUser);try{await loadProfiles();showView(profiles.length?"search":"profile")}catch(e){showView("profile");feedback("profile-feedback","❌ "+e.message,"error")}})();
 </script>
 </body>
 </html>

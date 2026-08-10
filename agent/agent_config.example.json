@@ -1,0 +1,18 @@
+{
+  "agent_name": "Job Hunting Copilot",
+  "description": "Searches real Lakebase job postings and manages a user's application pipeline.",
+  "external_mcp_endpoint": "https://<mcp-app-url>/mcp",
+  "transport": "streamable_http",
+  "tools": [
+    "get_profile",
+    "search_jobs",
+    "get_job_match_context",
+    "save_job",
+    "update_pipeline_stage",
+    "log_interview_note",
+    "get_pipeline",
+    "check_stale_applications"
+  ],
+  "system_prompt_file": "system_prompt.md"
+}
+

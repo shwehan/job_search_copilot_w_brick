@@ -1,4 +1,4 @@
-# AI Job Hunting Copilot — Phases 1–4
+# AI Job Hunting Copilot — Phases 1–5
 
 Harvests live job postings from three sources — Adzuna, USAJobs, and RemoteOK — normalizes them
 to one schema, and stores them in Lakebase (Databricks-managed Postgres).
@@ -6,10 +6,9 @@ to one schema, and stores them in Lakebase (Databricks-managed Postgres).
 Phase 1 provides ingestion and Lakebase storage. Phase 2 adds chunked, hosted GTE embeddings and
 configurable top-K pgvector retrieval. Phase 3 adds profiles, resume upload, bookmarks, and a
 persistent application pipeline. Phase 4 adds the required Spark data pipeline and scheduled
-incremental refresh. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md) for the remaining
-waterfall roadmap — an MCP server + a
-Databricks Agent Bricks agent (Phase 5), and the differentiating features carried over from a prior
-personal project (Phase 6).
+incremental refresh. Phase 5 adds a separate FastMCP Databricks App and a guarded Agent Bricks
+configuration with tools that both retrieve and write. See [`CAPSTONE_PLAN.md`](CAPSTONE_PLAN.md)
+for the remaining differentiators and final polish roadmap.
 
 ---
 
@@ -26,6 +25,8 @@ job-hunting-copilot/
 ├── phase4_pipeline.py      Spark preparation + scheduled orchestration
 ├── databricks.yml          Declarative Automation Bundle entry point
 ├── resources/              Serverless scheduled-job definition
+├── mcp_server/             Separate FastMCP Databricks App + Lakebase adapter
+├── agent/                  Agent prompt, config example, and evidence checklist
 ├── lakebase.py            Lakebase connection helper (pg8000)
 ├── secrets_helper.py      Generic Databricks-secret resolution (env var, else secret)
 ├── config.py               Table names, harvest defaults
@@ -55,13 +56,14 @@ job-hunting-copilot/
 ├── notebooks/
 │   └── ingest_job_embeddings.ipynb
 ├── templates/
-│   └── index.html          Web UI (sync + browse)
+│   └── index.html          Profile-first job search and pipeline UI
 ├── CAPSTONE_PLAN.md         Full project roadmap, Phases 1-8
 └── .env.example
 ```
 
 See [`PHASE3_UPDATE.md`](PHASE3_UPDATE.md) for the dashboard smoke test.
 See [`PHASE4_UPDATE.md`](PHASE4_UPDATE.md) for the Spark job setup and acceptance checks.
+See [`PHASE5_UPDATE.md`](PHASE5_UPDATE.md) for MCP deployment and Agent Bricks registration.
 
 ---
 
@@ -258,6 +260,18 @@ posting's best-matching chunk. Re-running embedding skips unchanged `content_has
 5. Run `sql/18_verify_phase4_pipeline.sql`; unchanged postings should have no missing current-hash embeddings.
 6. Create the scheduled notebook Job in the UI, or validate/deploy the included bundle configuration.
 7. Keep the schedule paused until two manual runs demonstrate idempotency.
+
+## Databricks Phase 5 run order
+
+1. Redeploy the root dashboard App to receive the profile-first UX.
+2. Create a second Custom App named `mcp-job-hunting-copilot` from the
+   repository's `mcp_server/` subfolder.
+3. Grant that App's service principal secret READ and embedding endpoint CAN QUERY.
+4. Deploy it and use `<mcp-app-url>/mcp` as the Streamable HTTP endpoint.
+5. Register the endpoint under AI Gateway → MCPs and grant EXECUTE.
+6. Create the Agent Bricks agent, add the MCP tools, and paste
+   `agent/system_prompt.md` as its system prompt.
+7. Complete the real traces and screenshots in `agent/DEMO_EVIDENCE.md`.
 
 ---
 
